@@ -1,7 +1,10 @@
 #!/bin/bash
-set -e
+set -ex
+AWS_ACCESS_KEY_ID=$(cat $HOME/.aws/credentials | awk -F "=" '/aws_access_key_id/ {print $2}')
+AWS_SECRET_ACCESS_KEY=$(cat $HOME/.aws/credentials | awk -F "=" '/aws_secret_access_key/ {print $2}')
+
 export TF_VAR_armory_s3_bucket=armory-spkr
-export TF_VAR_armory_s3_path_prefix=integration-test
+export TF_VAR_armory_s3_path_prefix=integration/integration-test
 export TF_VAR_aws_region=us-west-2
 export TF_VAR_armory_subnet_id=subnet-b00718e9
 export TF_VAR_armory_vpc_id=vpc-0551fd61
