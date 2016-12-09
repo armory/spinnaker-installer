@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+VERSION=$(git rev-parse HEAD | cut -c -7)
+
+rm -dfr build
+mkdir -p build
+cp etc/terraform/armory-spinnaker.tf build/
+cp etc/terraform/userdata.sh build/
+
+
+PREFIX="stage/${BRANCH_NAME}"
+if [[ "${BRANCH_NAME}" == "master" ]]; then
+    PREFIX="install/${GIT_HASH}"
+fi
+
+sed -e "s|\${PREFIX}|${PREFIX}|g" bin/install.sh > build/install.sh
+
+BUCKET="s3://armory-web"
+cd "$(git rev-parse --show-toplevel)"
+
+echo "Uploading to get.armory.io/"
+
+cd build
+for f in * ; do
+    aws s3 cp ${f} ${BUCKET}/${PREFIX}/${f}
+done
+
+INSTALLER_PATH=${BUCKET}/${PREFIX}/install.sh
+if [[ "${BRANCH_NAME}" == "master" ]]; then
+  INSTALLER_PATH=${BUCKET}/install.sh
+fi
+
+aws s3 cp install.sh ${INSTALLER_PATH}
+# Update the root url http://get.armory.io to download the latest version
