@@ -1,0 +1,11 @@
+#!/bin/bash
+set -x
+source ./build/deploy-env
+export TF_VAR_armory_s3_bucket=armory-spkr
+export TF_VAR_armory_s3_path_prefix=integration-test
+export TF_VAR_aws_region=us-west-2
+export TF_VAR_armory_subnet_id=subnet-b00718e9
+export TF_VAR_armory_vpc_id=vpc-0551fd61
+echo "running integration for script for ${PREFIX}"
+#curl -sS http://get.armory.io/${PREFIX}/install.sh
+bash -c "$(curl -sS http://get.armory.io/${PREFIX}/install.sh)"
