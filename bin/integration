@@ -1,6 +1,5 @@
 #!/bin/bash
-set -x
-source ./build/deploy-env
+set -e
 export TF_VAR_armory_s3_bucket=armory-spkr
 export TF_VAR_armory_s3_path_prefix=integration-test
 export TF_VAR_aws_region=us-west-2
