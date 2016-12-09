@@ -1,6 +1,3 @@
-#
-# TODO: Shouldn't have public IP
-#
 data "template_file" "armory_spinnaker_ud" {
   template = "${file("userdata.sh")}"
   vars {
@@ -33,6 +30,7 @@ resource "aws_launch_configuration" "armory_spinnaker_lc" {
   name                  = "armory-spinnaker-lc"
   image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
+  associate_public_ip_address = false
   iam_instance_profile  = "${aws_iam_role.SpinnakerInstanceProfile.name}"
   security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
   user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
