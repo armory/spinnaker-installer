@@ -13,15 +13,12 @@ data "aws_ami" "armory_spinnaker_ami" {
     values = ["available"]
   }
   filter {
-    name = "owner-alias"
-    values = ["armory-io"]
-  }
-  filter {
     name = "name"
     values = ["armory-spinnaker*"]
   }
   filter {
     name = "tag:Release"
+    values = ["*"]
   }
   most_recent = true
 }

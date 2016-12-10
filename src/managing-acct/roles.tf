@@ -3,12 +3,23 @@
 # Spinnaker Managed and Managing Accounts:
 #
 
-resource "aws_iam_role" "SpinnakerManagedProfile" {
-    name = "SpinnakerManagedProfile"   
-}
-
 resource "aws_iam_role" "SpinnakerInstanceProfile" {
     name = "SpinnakerInstanceProfile"
+    assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
 }
 
 resource "aws_iam_instance_profile" "SpinnakerInstanceProfile" {
@@ -16,10 +27,30 @@ resource "aws_iam_instance_profile" "SpinnakerInstanceProfile" {
     roles = ["${aws_iam_role.SpinnakerInstanceProfile.name}"]
 }
 
+resource "aws_iam_role" "SpinnakerManagedProfile" {
+    name = "SpinnakerManagedProfile"
+    assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "${aws_iam_role.SpinnakerInstanceProfile.arn}"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
 #
 # Spinnaker Managed Account:
 #
 
+/*
 resource "aws_iam_policy" "SpinnakerManagedPolicy" {
     name = "SpinnakerManagedPolicy"
     policy = <<EOF
@@ -38,6 +69,7 @@ resource "aws_iam_policy" "SpinnakerManagedPolicy" {
 }
 EOF
 }
+*/
 
 resource "aws_iam_policy" "SpinnakerAccessPolicy" {
     name = "SpinnakerAccessPolicy"
@@ -59,13 +91,15 @@ resource "aws_iam_policy" "SpinnakerAccessPolicy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "SpinnakerManagedAttachment" {
+/*
+resource "aws_iam_role_policy_attachment" "SpinnakerManagedAttachment" {
     role = "${aws_iam_role.SpinnakerManagedProfile.name}"
     policy_arn = "${aws_iam_policy.SpinnakerManagedPolicy.arn}"
 }
+*/
 
-resource "aws_iam_policy_attachment" "SpinnakerAccessAttachment" {
-    role = "${aws_iam_role.SpinnakerAccessPolicy.name}"
+resource "aws_iam_role_policy_attachment" "SpinnakerAccessAttachment" {
+    role = "${aws_iam_role.SpinnakerManagedProfile.name}"
     policy_arn = "${aws_iam_policy.SpinnakerAccessPolicy.arn}"
 }
 
@@ -92,7 +126,32 @@ resource "aws_iam_policy" "SpinnakerAssumeRolePolicy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "SpinnakerAssumeRoleAttachment" {
+resource "aws_iam_role_policy_attachment" "SpinnakerAssumeRoleAttachment" {
     role = "${aws_iam_role.SpinnakerInstanceProfile.name}"
     policy_arn = "${aws_iam_policy.SpinnakerAssumeRolePolicy.arn}"
+}
+
+resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
+  name = "SpinnakerS3AccessPolicy"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${var.armory_s3_bucket}/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "SpinnakerS3AccessAttachment" {
+    role = "${aws_iam_role.SpinnakerInstanceProfile.name}"
+    policy_arn = "${aws_iam_policy.SpinnakerS3AccessPolicy.arn}"
 }
