@@ -139,11 +139,9 @@ resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": [
-                "s3:*"
-            ],
+            "Action": "s3:*",
             "Resource": [
-                "arn:aws:s3:::${var.armory_s3_bucket}/*"
+                "arn:aws:s3:::${var.armory_s3_bucket}*"
             ]
         }
     ]
