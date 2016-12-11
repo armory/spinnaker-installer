@@ -4,6 +4,7 @@ data "template_file" "armory_spinnaker_ud" {
     s3_bucket               = "${var.armory_s3_bucket}"
     s3_front50_path_prefix  = "${var.s3_front50_path_prefix}"
     aws_region              = "${var.aws_region}"
+    redis_host              = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
   }
 }
 

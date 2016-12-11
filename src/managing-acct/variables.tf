@@ -1,4 +1,8 @@
 
+variable "vpc_id" {
+  description = "The VPC in which you want Spinnaker to live."
+}
+
 variable "armory_s3_bucket" {
     description = "S3 Bucket to persist Spinnaker's state."
 }
