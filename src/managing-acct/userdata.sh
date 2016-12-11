@@ -18,6 +18,7 @@ DECK_PORT=9000
 AUTH_ENABLED=false
 SERVER_ADDRESS=0.0.0.0
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
+REDIS_HOST=${redis_host}
 EOT
 
 source /etc/default/armory
