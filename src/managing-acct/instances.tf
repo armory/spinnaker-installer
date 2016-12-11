@@ -35,6 +35,7 @@ resource "aws_launch_configuration" "armory_spinnaker_lc" {
 }
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {
+  vpc_id = "${var.vpc_id}"
   availability_zones    = ["${split(",", var.availability_zones)}"]
   name                  = "armory-spinnaker-asg"
   max_size              = "${var.asg_max}"

@@ -1,5 +1,6 @@
 
 resource "aws_security_group" "armory_spinnaker_web" {
+  vpc_id = "${var.vpc_id}"
   name = "armory-spinnaker-web"
   description = "Allows web traffic to the dashboard."
 
@@ -24,6 +25,7 @@ resource "aws_security_group" "armory_spinnaker_web" {
 }
 
 resource "aws_security_group" "armory_spinnaker_default" {
+  vpc_id = "${var.vpc_id}"
   name = "armory-spinnaker-default"
   description = "Allows communication between Spinnaker services."
 
@@ -55,15 +57,3 @@ resource "aws_security_group" "armory_spinnaker_default" {
     Name = "armory-spinnaker-default"
   }
 }
-
-/*
-# Allow communication within the spinnaker infrastructure.
-resource "aws_security_group_rule" "armory_spinnaker_default_rule" {
-    type = "ingress"
-    from_port = 0
-    to_port = 65535
-    protocol = "tcp"
-    security_group_id = "${aws_security_group.armory_spinnaker_default.id}"
-    self = true
-}
-*/

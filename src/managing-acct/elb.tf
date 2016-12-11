@@ -1,5 +1,6 @@
 
 resource "aws_elb" "armory_spinnaker_elb" {
+  vpc_id = "${var.vpc_id}"
   name = "armory-spinnaker-elb"
   security_groups = [
     "${aws_security_group.armory_spinnaker_default.id}",
