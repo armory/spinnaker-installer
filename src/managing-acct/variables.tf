@@ -1,12 +1,3 @@
-variable "spinnaker_images" {
-  type = "map"
-
-  default = {
-    us-east-1 = "ami-14969103"
-    us-west-1 = "ami-12a3f472"
-    us-west-2 = "ami-bd359ddd"
-  }
-}
 
 variable "armory_s3_bucket" {
     description = "S3 Bucket to persist Spinnaker's state."
@@ -23,7 +14,7 @@ variable "armory_subnet_id" {
 
 variable "aws_region" {
   description = "The region in which you want Spinnaker to live."
-  default = "us-west-2"
+  #default = "us-west-2"
 }
 
 variable "availability_zones" {
@@ -34,7 +25,6 @@ variable "instance_type" {
   description = "The instance type in which you want Spinnaker to live."
   default = "m3.2xlarge"
 }
-
 
 variable "key_name" { }
 

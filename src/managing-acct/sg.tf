@@ -43,19 +43,27 @@ resource "aws_security_group" "armory_spinnaker_default" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port = 0
+    to_port = 65535
+    protocol = "tcp"
+    # security_group_id = "${aws_security_group.armory_spinnaker_default.id}"
+    self = true
+  }
+
   tags {
     Name = "armory-spinnaker-default"
   }
 }
 
+/*
 # Allow communication within the spinnaker infrastructure.
-resource "aws_security_group_rule" "armory_spinnaker_default" {
+resource "aws_security_group_rule" "armory_spinnaker_default_rule" {
     type = "ingress"
     from_port = 0
     to_port = 65535
     protocol = "tcp"
-    source_security_group_id = "${aws_security_group.armory_spinnaker_default.id}"
     security_group_id = "${aws_security_group.armory_spinnaker_default.id}"
+    self = true
 }
-
-
+*/
