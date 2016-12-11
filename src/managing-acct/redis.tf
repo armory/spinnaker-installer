@@ -1,5 +1,4 @@
 resource "aws_elasticache_replication_group" "armory-spinnaker-cache" {
-  vpc_id = "${var.vpc_id}"
   replication_group_id          = "spinnaker-cache"
   replication_group_description = "Spinnaker's cache"
   number_cache_clusters         = "2"
