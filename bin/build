@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+docker build -t "${DOCKER_IMAGE}" -f etc/Dockerfile .
+
 cd "$(git rev-parse --show-toplevel)"
 
 VERSION=$(git rev-parse HEAD | cut -c -7)
@@ -16,7 +18,7 @@ if [[ "${BRANCH_NAME}" == "master" ]]; then
     PREFIX="install/${GIT_HASH}"
 fi
 
-sed -e "s|\${PREFIX}|${PREFIX}|g" bin/install.sh > build/install.sh
+sed -e "s|\${PREFIX}|${PREFIX}|g" src/install.sh > build/install.sh
 
 BUCKET="s3://armory-web"
 cd "$(git rev-parse --show-toplevel)"

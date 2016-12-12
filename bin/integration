@@ -1,13 +1,47 @@
 #!/bin/bash
-set -ex
-export AWS_ACCESS_KEY_ID=$(cat $HOME/.aws/credentials | awk -F "=" '/aws_access_key_id/ {print $2}')
-export AWS_SECRET_ACCESS_KEY=$(cat $HOME/.aws/credentials | awk -F "=" '/aws_secret_access_key/ {print $2}')
-#TODO: CREATE NEW VPC
-export TF_VAR_armory_s3_bucket=armory-spkr
-export TF_VAR_armory_s3_path_prefix=integration/integration-test
-export TF_VAR_aws_region=us-west-2
-export TF_VAR_armory_subnet_id=subnet-b00718e9
-export TF_VAR_armory_vpc_id=vpc-0551fd61
-echo "running integration for script for ${PREFIX}"
-#curl -sS http://get.armory.io/${PREFIX}/install.sh
-bash -c "$(curl -sS http://get.armory.io/${PREFIX}/install.sh)"
+set -x
+AWS_DEFAULT_REGION="us-west-2"
+KEYPAIR_NAME="packager-integration-keypair"
+INSTANCE_TYPE="t2.micro"
+SECURITY_GROUPS=["default,spinnaker_allow_armory-spinnaker"]
+
+if [[ -z "${IMAGE_ID}" ]]; then
+  echo "IMAGE_ID is not set"
+  exit 1
+fi
+
+echo "running integration with docker: ${DOCKER_IMAGE}"
+$DOCKER_RUN \
+  ${DOCKER_ENV} \
+  -p 5000:5000 \
+  -e "IMAGE_ID=${IMAGE_ID}" \
+  -v ${BASE_DIR}/src/armory:/home/armory \
+  -v ${HOME}/.aws/:/root/.aws/ \
+  "${DOCKER_IMAGE}"
+
+# echo "Using Image: ${IMAGE_ID} to test spinnaker packager integration"
+#
+# rsa_key=$(aws ec2 create-key-pair --key-name ${KEYPAIR_NAME} \
+#     --query 'KeyMaterial' --output=text)
+# tmpfile=$(mktemp /tmp/tmp-keypair.XXXXX)
+# echo ${rsa_key} >> ${tmpfile}
+#
+# reservation_id=$(aws ec2 run-instances \
+#   --image-id ${IMAGE_ID} \
+#   --count 1 \
+#   --instance-type ${I NSTANCE_TYPE} \
+#   --key-name ${KEYPAIR_NAME} \
+#   --security-groups ${SECURITY_GROUPS} \
+#   --query 'ReservationId' \
+#   --output=text)
+#
+# host_name=$(aws ec2 describe-instances \
+#       --filters "Name=reservation-id,Values=${reservation_id}" \
+#       --query 'Reservations[0].Instances[0].PublicDnsName' \
+#       --output=text)
+#
+# for i in {1..500}; do
+#   echo "Waiting to SSH into "
+#   sleep 2
+# done
+# aws ec2 delete-key-pair --key-name ${KEYPAIR_NAME}
