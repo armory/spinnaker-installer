@@ -1,14 +1,12 @@
 
 resource "aws_elb" "armory_spinnaker_elb" {
   name = "armory-spinnaker-elb"
+  subnets = ["${var.armory_subnet_id}"]
   security_groups = [
     "${aws_security_group.armory_spinnaker_default.id}",
     "${aws_security_group.armory_spinnaker_web.id}"
   ]
   
-  # The same availability zone as our instances
-  availability_zones = ["${split(",", var.availability_zones)}"]
-
   listener {
     instance_port     = 9000
     instance_protocol = "http"
@@ -81,6 +79,6 @@ resource "aws_elb" "armory_spinnaker_elb" {
   }
 }
 
-output "spinnaker_elb_dns" {
-    value = "${aws_elb.armory_spinnaker_elb.public_dns}"
+output "spinnaker_url" {
+    value = "${aws_elb.armory_spinnaker_elb.dns_name}"
 }

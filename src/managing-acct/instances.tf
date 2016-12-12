@@ -5,7 +5,7 @@ data "template_file" "armory_spinnaker_ud" {
     s3_front50_path_prefix  = "${var.s3_front50_path_prefix}"
     aws_region              = "${var.aws_region}"
     redis_host              = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
-    spinnaker_url           = "${aws_elb.armory_spinnaker_elb.public_dns}"
+    spinnaker_url           = "${aws_elb.armory_spinnaker_elb.dns_name}"
   }
 }
 
@@ -37,7 +37,6 @@ resource "aws_launch_configuration" "armory_spinnaker_lc" {
 }
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {
-  availability_zones    = ["${split(",", var.availability_zones)}"]
   name                  = "armory-spinnaker-asg"
   max_size              = "${var.asg_max}"
   min_size              = "${var.asg_min}"
