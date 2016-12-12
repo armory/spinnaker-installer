@@ -19,6 +19,7 @@ AUTH_ENABLED=false
 SERVER_ADDRESS=0.0.0.0
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=${redis_host}
+SPINNAKER_URL=${spinnaker_url}
 EOT
 
 source /etc/default/armory
