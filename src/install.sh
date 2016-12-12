@@ -148,7 +148,6 @@ function main() {
   describe_installer
   look_for_docker
   prompt_user
-  exit 0
   create_tmp_space
   save_user_responses
   download_tf_templates
