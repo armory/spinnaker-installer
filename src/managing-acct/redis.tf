@@ -1,5 +1,5 @@
 resource "aws_elasticache_subnet_group" "armory-spinnaker-cache-subnet" {
-    name = "${var.armory_spinnaker_cache_subnet}"
+    name = "${var.armory_spinnaker_cache_subnet_name}"
     subnet_ids = ["${var.armory_subnet_id}"]
 }
 

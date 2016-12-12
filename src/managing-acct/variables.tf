@@ -1,9 +1,9 @@
-variable "spinnaker_instance_profile" {
+variable "spinnaker_instance_profile_name" {
   description = "The name of the role you want to use for the Spinnaker instance"
   default = "SpinnakerInstanceProfile"
 }
 
-variable "spinnaker_managed_profile" {
+variable "spinnaker_managed_profile_name" {
   description = "The name of the managed role you want Spinnaker to manage"
   default = "SpinnakerManagedProfile"
 }
@@ -17,34 +17,34 @@ variable "spinnaker_cache_replication_group_id" {
   default = "replication-group"
 }
 
-variable "armory_spinnaker_cache_subnet" {
+variable "armory_spinnaker_cache_subnet_name" {
   description = "The name of the elasticache subnet security group"
   default = "armory-spinnaker-cache-subnet"
 }
-variable "spinnaker_access_policy" {
+variable "spinnaker_access_policy_name" {
   description = "The name of the access policy you want spinnaker to have"
   default = "SpinnakerAccessPolicy"
 }
 
 
-variable "spinnaker_web_sg" {
+variable "spinnaker_web_sg_name" {
   description = "The name of the security group to give to allow web traffic to the dashboard"
   default = "spinnaker-armory-web"
 }
 
 
-variable "spinnaker_default_sg" {
+variable "spinnaker_default_sg_name" {
   description = "The name of the default security group that allows Spinnaker sub-services to communicate"
   default = "armory-spinnaker-default"
 }
 
-variable "spinnaker_assume_policy" {
+variable "spinnaker_assume_policy_name" {
   description = "The name of the assume policy you want spinnaker to use"
   default = "SpinnakerAssumePolicy"
 }
 
 
-variable "spinnaker_s3_access_policy" {
+variable "spinnaker_s3_access_policy_name" {
   description = "By default Spinnaker uses S3 as it's backing store for pipelines & applications data and requires a policy"
   default = "SpinnakerS3AccessPolicy"
 }

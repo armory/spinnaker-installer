@@ -1,7 +1,7 @@
 
 resource "aws_security_group" "armory_spinnaker_web" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.spinnaker_web_sg}"
+  name = "${var.spinnaker_web_sg_name}"
   description = "Allows web traffic to the dashboard."
 
   ingress {
@@ -20,13 +20,13 @@ resource "aws_security_group" "armory_spinnaker_web" {
   }
 
   tags {
-    Name = "${var.spinnaker_web_sg}"
+    Name = "${var.spinnaker_web_sg_name}"
   }
 }
 
 resource "aws_security_group" "armory_spinnaker_default" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.spinnaker_default_sg}"
+  name = "${var.spinnaker_default_sg_name}"
   description = "Allows communication between Spinnaker services."
 
   # outbound internet access
