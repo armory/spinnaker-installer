@@ -1,12 +1,12 @@
 
 resource "aws_elb" "armory_spinnaker_elb" {
-  name = "armory-spinnaker-elb"
+  name = "${var.armory_spinnaker_elb_name}"
   subnets = ["${var.armory_subnet_id}"]
   security_groups = [
     "${aws_security_group.armory_spinnaker_default.id}",
     "${aws_security_group.armory_spinnaker_web.id}"
   ]
-  
+
   listener {
     instance_port     = 9000
     instance_protocol = "http"
