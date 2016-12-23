@@ -8,6 +8,16 @@ data "template_file" "armory_spinnaker_ud" {
   }
 }
 
+variable "release_tag" {
+  default = "Release"
+}
+
+
+variable "release_tag_value" {
+  default = "*"
+}
+
+
 data "aws_ami" "armory_spinnaker_ami" {
   filter {
     name = "state"
@@ -16,10 +26,6 @@ data "aws_ami" "armory_spinnaker_ami" {
   filter {
     name = "name"
     values = ["armory-spinnaker*"]
-  }
-  filter {
-    name = "tag:Release"
-    values = ["*"]
   }
   most_recent = true
 }
@@ -32,7 +38,7 @@ resource "aws_launch_configuration" "armory_spinnaker_lc" {
   iam_instance_profile  = "${aws_iam_role.SpinnakerInstanceProfile.name}"
   security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
   user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
-  key_name              = "${var.key_name}"  
+  key_name              = "${var.key_name}"
 }
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {

@@ -48,7 +48,7 @@ function get_vars() {
   echo "getting vars..."
   rm -r /tmp/armory/ || true
   mkdir -p /tmp/armory/
-  mpfile=$(mktemp /tmp/armory/armory-env.tmp)
+  mpfile=/tmp/armory/armory-env.tmp
   echo "saving armory environment variables: $mpfile"
 
   # we have to do this to make sure to not put this bar into

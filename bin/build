@@ -9,9 +9,10 @@ VERSION=$(git rev-parse HEAD | cut -c -7)
 
 rm -dfr build
 mkdir -p build
-cp etc/terraform/armory-spinnaker.tf build/
-cp etc/terraform/userdata.sh build/
+rm -f src/managing-acct/*.tfstate
 
+#rsync instead of cp is to exclude files
+rsync -av --progress src/managing-acct/* build/ --exclude "*.backup"
 
 PREFIX="stage/${BRANCH_NAME}"
 if [[ "${BRANCH_NAME}" == "master" ]]; then
@@ -26,6 +27,7 @@ cd "$(git rev-parse --show-toplevel)"
 echo "Uploading to get.armory.io/"
 
 cd build
+
 for f in * ; do
     aws s3 cp ${f} ${BUCKET}/${PREFIX}/${f}
 done
