@@ -19,15 +19,15 @@ RUN apt-get -y update && \
 RUN /usr/local/bin/pip install \
     boto==2.44.0 \
     requests==2.12.3 \
-    nose==1.3.7
+    nose==1.3.7 \
+    pycrypto==2.6.1 
 
-RUN curl -O https://releases.hashicorp.com/terraform/0.8.2/terraform_0.8.2_linux_amd64.zip && \
-    unzip terraform_0.8.2_linux_amd64.zip -d /usr/bin/
+RUN curl -o /terraform.zip https://releases.hashicorp.com/terraform/0.8.2/terraform_0.8.2_linux_amd64.zip && \
+    unzip /terraform.zip -d /usr/bin/
 
-ADD ./src/armory /home/armory
-ADD ./src/managing-acct /home/terraform/managing-acct
+ADD ./src/python/armory /home/armory/python/armory
+ADD ./src/terraform/ /home/armory/terraform/
 
-WORKDIR /home/armory
+WORKDIR /home/armory/python/armory
 
-RUN which nosetests
 CMD ["/usr/local/bin/nosetests", "-v", "--nocapture", "./"]

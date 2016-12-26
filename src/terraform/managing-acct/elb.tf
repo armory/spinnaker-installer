@@ -1,13 +1,11 @@
 
 resource "aws_elb" "armory_spinnaker_elb" {
-  name = "armory-spinnaker-elb"
+  name = "${var.armory_spinnaker_elb_name}"
+  subnets = ["${var.armory_subnet_id}"]
   security_groups = [
     "${aws_security_group.armory_spinnaker_default.id}",
     "${aws_security_group.armory_spinnaker_web.id}"
   ]
-  
-  # The same availability zone as our instances
-  availability_zones = ["${split(",", var.availability_zones)}"]
 
   listener {
     instance_port     = 9000
@@ -76,11 +74,11 @@ resource "aws_elb" "armory_spinnaker_elb" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "HTTP:9000/"
+    target              = "HTTP:5000/healthcheck"
     interval            = 30
   }
 }
 
-output "spinnaker_elb_dns" {
-    value = "${aws_elb.armory_spinnaker_elb.public_dns}"
+output "spinnaker_url" {
+    value = "${aws_elb.armory_spinnaker_elb.dns_name}"
 }

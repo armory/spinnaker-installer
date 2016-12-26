@@ -4,7 +4,7 @@
 #
 
 resource "aws_iam_role" "SpinnakerInstanceProfile" {
-    name = "SpinnakerInstanceProfile"
+    name = "${var.spinnaker_instance_profile_name}"
     assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -23,12 +23,12 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "SpinnakerInstanceProfile" {
-    name = "SpinnakerInstanceProfile"
+    name = "${var.spinnaker_instance_profile_name}"
     roles = ["${aws_iam_role.SpinnakerInstanceProfile.name}"]
 }
 
 resource "aws_iam_role" "SpinnakerManagedProfile" {
-    name = "SpinnakerManagedProfile"
+    name = "${var.spinnaker_managed_profile_name}"
     assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -72,7 +72,7 @@ EOF
 */
 
 resource "aws_iam_policy" "SpinnakerAccessPolicy" {
-    name = "SpinnakerAccessPolicy"
+    name = "${var.spinnaker_access_policy_name}"
     policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -109,7 +109,7 @@ resource "aws_iam_role_policy_attachment" "SpinnakerAccessAttachment" {
 #
 
 resource "aws_iam_policy" "SpinnakerAssumeRolePolicy" {
-    name = "SpinnakerAssumeRolePolicy"
+    name = "${var.spinnaker_assume_policy_name}"
     policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -132,7 +132,7 @@ resource "aws_iam_role_policy_attachment" "SpinnakerAssumeRoleAttachment" {
 }
 
 resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
-  name = "SpinnakerS3AccessPolicy"
+  name = "${var.spinnaker_s3_access_policy_name}"
   policy = <<EOF
 {
     "Version": "2012-10-17",

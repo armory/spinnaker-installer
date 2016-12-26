@@ -9,10 +9,10 @@ VERSION=$(git rev-parse HEAD | cut -c -7)
 
 rm -dfr build
 mkdir -p build
-rm -f src/managing-acct/*.tfstate
+rm -f src/terraform/managing-acct/*.tfstate
 
 #rsync instead of cp is to exclude files
-rsync -av --progress src/managing-acct/* build/ --exclude "*.backup"
+rsync -av --progress src/terraform/managing-acct/* build/ --exclude "*.backup"
 
 PREFIX="stage/${BRANCH_NAME}"
 if [[ "${BRANCH_NAME}" == "master" ]]; then

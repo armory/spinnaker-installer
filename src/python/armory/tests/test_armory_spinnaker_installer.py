@@ -102,32 +102,16 @@ def get_vpc(vpc_conn, vpc_name_tag, cidr_block, delete_vpc):
 def get_subnet(vpc_conn, vpc_name_not_used, subnet_cidr_not_used, vpc):
     return vpc_conn.get_all_subnets(filters={'vpcId':vpc.id})[0]
 
-def exec_tf(bash):
-
-    pass
 
 def test_armory_spinnaker_ami():
-
-    install_version = os.environ.get("INSTALLER_VERSION", "")
-    url = "http://get.armory.io/%s" % install_version
-    vpc_conn = vpc.connect_to_region(DEFAULT_REGION)
     ec2_conn = ec2.connect_to_region(DEFAULT_REGION)
-    context = {
-        'vpc_conn':  vpc_conn,
-        'ec2_conn': ec2_conn,
-        'get_vpc': partial(create_vpc, vpc_conn, VPC_NAME_TAG, CIDR_BLOCK, partial(delete_vpc, vpc_conn)),
-        #'get_vpc': partial(get_vpc, vpc_conn, VPC_NAME_TAG, CIDR_BLOCK, partial(delete_vpc, vpc_conn)),
-        'get_subnet': partial(create_subnet, vpc_conn, VPC_NAME_TAG, SUBNET_CIDR),
-        #'get_subnet': partial(get_subnet, vpc_conn, VPC_NAME_TAG, SUBNET_CIDR),
-        'get_key_pair': partial(get_key_pair, ec2_conn, KEY_PAIR_NAME),
-        'delete_key_pair': partial(ec2_conn.delete_key_pair, KEY_PAIR_NAME),
-        'delete_vpc': partial(delete_vpc, vpc_conn),
-        'get_gateway': partial(create_gateway, vpc_conn),
-        'delete_gateway': partial(delete_gateway, vpc_conn)
-    }
+    #key_pair = get_key_pair(ec2_conn, installer.KEY_NAME)
     try:
-        #create_resources(context)
-        installer.install_armory_spinnaker("vpc-31e64556", "subnet-f6130980", KEY_PAIR_NAME)
+        vpc_id, subnet_id = installer.create_vpc()
+        try:
+            installer.install_armory_spinnaker(vpc_id, subnet_id)
+        finally:
+            installer.destroy_armory_spinnaker(vpc_id, subnet_id)
     finally:
         pass
-        #clean_up_resources(context)
+        #installer.destroy_vpc()
