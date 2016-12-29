@@ -1,117 +1,107 @@
 from boto import ec2, vpc
 import requests
 from functools import partial
-from armory import installer
-
+from armory import installer, crypto
+from os import chmod, path, environ, O_WRONLY
+import time
 import os
-
-KEY_PAIR_NAME="packager-integration-keypair"
-SECURITY_GROUPS=["default", "spinnaker_allow_armory-spinnaker"]
-DEBUG=False
-INSTANCE_TYPE="t2.micro"
-SSH_USER_NAME="ubuntu"
-DEFAULT_REGION="us-west-2"
-CIDR_BLOCK="10.1.0.0/24"
-SUBNET_CIDR="10.1.0.0/28"
-VPC_NAME_TAG="Integration Test Temp VPC"
+from boto.manage.cmdshell import sshclient_from_instance
+import paramiko
+from armory import cmd
+import unittest
+from armory import http
 
 
-def create_armory_instance(conn, image_id, key_pair_name, reservation_fn):
-    tf_vars= {
-        'TF_VAR_vpc_id':'vpc-037ea264',
-        'TF_VAR_armory_s3_bucket':'armory-spkr',
-        'TF_VAR_armory_subnet_id':'subnet-0c14057a',
-        'TF_VAR_availability_zones': 'us-west-2a',
-        'TF_VAR_aws_region': 'us-west-2',
-        'TF_VAR_key_name': key_pair_name
-    }
-    os.environ.update(tf_vars)
+def env_or_default(key, default_value):
+    val = environ.get(key, default_value)
+    if val:
+        return environ.get(key)
+    else:
+        return default_value
 
-def create_resources(context):
-    context['vpc'] = context['get_vpc']()
-    context['subnet'] = context['get_subnet'](context['vpc'])
-    print("creating gateway...")
-    context['gateway'] = context['get_gateway'](context['vpc'],context['subnet'])
-    print("getting key pair...")
-    context['key_pair'] = context['get_key_pair']()
+TEST_TIMEOUT = int(env_or_default("SPINNAKER_TEST_TIMEOUT", 600))
+BACKOFF_MAX = 10
+BACKOFF_FACTOR = 1
+NUM_RETRIES = int(TEST_TIMEOUT/BACKOFF_MAX)
+PRIVATE_KEY_PATH = "%s/private.key" % path.dirname(path.realpath(__file__))
+PUBLIC_KEY_PATH = "%s/public.key" % path.dirname(path.realpath(__file__))
 
-def clean_up_resources(context):
-    try:
-        context['delete_gateway'](context['vpc'], context['gateway'])
-        context['delete_vpc'](context['vpc'])
-        context['delete_key_pair']()
-    except Exception as err:
-        exc_info = sys.exc_info()
-        traceback.print_exception(*exc_info)
+class TestSpinnakerInstaller(unittest.TestCase):
 
-def get_key_pair(conn, key_pair_name):
-    try:
-        print("finding existing key pairs if any")
-        key = conn.get_all_key_pairs(keynames=[key_pair_name])[0]
-        conn.delete_key_pair(key_pair_name, dry_run=DEBUG)
-    except Exception as e:
-        print("key pair: %s does not exist, creating new one" % key_pair_name)
-        print(e)
+    elb_hostname = None
+    ssh_client = None
+    http_session = None
+    @classmethod
+    def setUpClass(cls):
+        print("creating session with timeout: %s and back off max: %s" % (TEST_TIMEOUT, BACKOFF_MAX))
+        cls.http_session = http.create_session(NUM_RETRIES, BACKOFF_FACTOR, BACKOFF_MAX)
+        cls.elb_hostname = env_or_default("SPINNAKER_ELB_HOSTNAME", None)
 
-    key_pair = conn.create_key_pair(key_pair_name, dry_run=DEBUG)
-    print("returning key pair")
-    return key_pair
+        vpc_id = env_or_default("TF_VAR_vpc_id", None)
+        subnet_id = env_or_default("TF_VAR_subnet_id", None)
+        instance_ip = env_or_default("SPINNAKER_INSTANCE_IP", None)
+        subnet_id = env_or_default("TF_VAR_subnet_id", None)
 
-def create_gateway(vpc_conn, vpc, subnet):
-    # Create an Internet Gateway
-    gateway = vpc_conn.create_internet_gateway()
-    vpc_conn.attach_internet_gateway(gateway.id, vpc.id)
-    #route_table = conn.create_route_table(vpc.id)
-    # Associate Route Table with our subnet
-    #conn.associate_route_table(route_table.id, subnet.id)
+        new_private_key = False
+        if path.exists(PUBLIC_KEY_PATH) and path.exists(PRIVATE_KEY_PATH):
+            print("using existing public key path: %s" % PRIVATE_KEY_PATH)
+            public_key = open(PUBLIC_KEY_PATH).read()
+        else:
+            new_private_key = True
+            print("creating new private key for keypair %s" % PRIVATE_KEY_PATH)
+            private_pem, public_key = crypto.generate_keypair()
+            with open(PRIVATE_KEY_PATH,'w', 0o600) as f: f.write(private_pem)
+            with open(PUBLIC_KEY_PATH, 'w', 0o600) as f: f.write(public_key)
 
-    # Create a Route from our Internet Gateway to the internet
-    #route = conn.create_route(route_table.id, '0.0.0.0/0', gateway.id)
-    return gateway
+        if not vpc_id or new_private_key:
+            vpc_id, subnet_id = installer.create_vpc(public_key)
+        else:
+            print("not creating vpc, using existing: %s" % vpc_id)
 
-def delete_gateway(vpc_conn, vpc, gateway):
-    vpc_conn.detach_internet_gateway(gateway.id, vpc.id, dry_run=False)
-    vpc_conn.delete_internet_gateway(gateway.id)
+        if not cls.elb_hostname or not instance_ip:
+            print("using spinnaker installer")
+            result = installer.install_armory_spinnaker(vpc_id, subnet_id)
+            cls.elb_url = result['spinnaker_url']
+        else:
+            print("not creating new spinnaker instance, using existing elb: %s" % cls.elb_hostname)
 
-def create_vpc(vpc_conn, vpc_name_tag, cidr_block, delete_vpc):
-    print("creating/getting new VPC")
-    vpcs = vpc_conn.get_all_vpcs(filters={'cidrBlock':cidr_block, 'tag-value':vpc_name_tag})
-    for vpc in vpcs: delete_vpc(vpc)
+        if not instance_ip:
+            conn = ec2.connect_to_region('us-west-2')
+            instance = installer.find_spinnaker_instance(conn, vpc_id, subnet_id)
+            instance_ip = instance.ip_address
+            print("no instance ip passed in, found this one: %s" % instance_ip)
+        else:
+            print("using instance ip passed in through env vars: %s" % instance_ip)
 
-    vpc = vpc_conn.create_vpc(cidr_block)
-    print("created new vpc with id:%s" % vpc.id)
-    vpc.add_tag("Name", vpc_name_tag)
+        print("trying to connect to %s" % instance_ip)
+        cls.ssh_client = cmd.ssh_client(instance_ip, "ubuntu",
+                        PRIVATE_KEY_PATH,
+                        NUM_RETRIES,
+                        BACKOFF_FACTOR
+                        )
 
-    return vpc
-
-def create_subnet(vpc_conn, vpc_name_tag, subnet_cidr, vpc):
-    subnet = vpc_conn.create_subnet(vpc.id, cidr_block=subnet_cidr)
-    subnet.add_tag("Name", vpc_name_tag)
-
-def delete_vpc(vpc_conn, vpc):
-    print("deleting subnets for:%s" % vpc.id)
-    for subnet in vpc_conn.get_all_subnets(filters={'vpcId':vpc.id}): vpc_conn.delete_subnet(subnet.id)
-
-    print("deleting vpc: %s" % vpc.id)
-    vpc.delete()
-
-def get_vpc(vpc_conn, vpc_name_tag, cidr_block, delete_vpc):
-    vpcs = vpc_conn.get_all_vpcs(filters={'cidrBlock':cidr_block, 'tag-value':vpc_name_tag})
-    return vpcs[0]
-
-def get_subnet(vpc_conn, vpc_name_not_used, subnet_cidr_not_used, vpc):
-    return vpc_conn.get_all_subnets(filters={'vpcId':vpc.id})[0]
-
-
-def test_armory_spinnaker_ami():
-    ec2_conn = ec2.connect_to_region(DEFAULT_REGION)
-    #key_pair = get_key_pair(ec2_conn, installer.KEY_NAME)
-    try:
-        vpc_id, subnet_id = installer.create_vpc()
-        try:
-            installer.install_armory_spinnaker(vpc_id, subnet_id)
-        finally:
+    @classmethod
+    def tearDownClass(cls):
+        def str2bool(v):
+            return v.lower() in ("yes", "true", "t", "1")
+        should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", True))
+        if should_tear_down:
             installer.destroy_armory_spinnaker(vpc_id, subnet_id)
-    finally:
-        pass
-        #installer.destroy_vpc()
+            installer.destroy_vpc()
+
+
+    def test_endpoint_access(self):
+        response = self.http_session.get("http://%s/" % self.elb_hostname, timeout=1)
+        self.assertEquals(response.status_code, 200)
+
+    def test_gate_access(self):
+        response = self.http_session.get("http://%s:8084/" % self.elb_hostname, timeout=1)
+        self.assertEquals(response.status_code, 200)
+
+    def test_access_to_s3(self):
+        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws s3 ls armory-spkr-integration')
+        self.assertEquals(status, 0, stdout)
+
+    def test_access_to_ecr(self):
+        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws ecr get-login --region us-west-2 --registry-ids 515116089304')
+        self.assertEquals(status, 0, stdout)

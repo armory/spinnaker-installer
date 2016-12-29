@@ -26,6 +26,13 @@ $DOCKER_RUN \
   -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
   -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
   -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
+  -e "AWS_SECURITY_TOKEN=${AWS_SESSION_TOKEN}" \
+  -e "TF_VAR_vpc_id=${TF_VAR_vpc_id}" \
+  -e "TF_VAR_subnet_id=${TF_VAR_subnet_id}" \
+  -e "SPINNAKER_ELB_HOSTNAME=${SPINNAKER_ELB_HOSTNAME}" \
+  -e "SPINNAKER_INSTANCE_IP=${SPINNAKER_INSTANCE_IP}" \
+  -e "SPINNAKER_TEARDOWN=${SPINNAKER_TEARDOWN}" \
+  -e "SPINNAKER_TEST_TIMEOUT=${SPINNAKER_TEST_TIMEOUT}" \
   -v ${BASE_DIR}/src/python/armory:/home/armory/python/armory \
-  -v ${BASE_DIR}/src/terraform/:/home/terraform/ \
+  -v ${BASE_DIR}/src/terraform:/home/armory/terraform \
   "${DOCKER_IMAGE}"

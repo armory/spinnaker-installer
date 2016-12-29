@@ -11,7 +11,6 @@ ARMORY_S3_BUCKET=${s3_bucket}
 ARMORY_S3_FRONT50_PATH_PREFIX=${s3_front50_path_prefix}
 AWS_REGION=${aws_region}
 HOSTNAME=$hostname
-PUBLIC_IP=$public_ip
 API_HOST=http://$hostname:8084
 DECK_HOST=0.0.0.0
 DECK_PORT=9000
@@ -21,6 +20,4 @@ SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=${redis_host}
 EOT
 
-source /etc/default/armory
-
-sudo docker-compose -f /application/compose/docker-compose.yml up -d
+service armory-spinnaker start

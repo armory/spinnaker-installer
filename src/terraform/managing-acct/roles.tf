@@ -131,6 +131,33 @@ resource "aws_iam_role_policy_attachment" "SpinnakerAssumeRoleAttachment" {
     policy_arn = "${aws_iam_policy.SpinnakerAssumeRolePolicy.arn}"
 }
 
+resource "aws_iam_policy" "SpinnakerECRAccessPolicy" {
+  name = "${var.spinnaker_ecr_access_policy_name}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPull",
+      "Effect": "Allow",
+      "Action": [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "SpinnakerECRAccessAttachment" {
+    role = "${aws_iam_role.SpinnakerInstanceProfile.name}"
+    policy_arn = "${aws_iam_policy.SpinnakerECRAccessPolicy.arn}"
+}
+
 resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
   name = "${var.spinnaker_s3_access_policy_name}"
   policy = <<EOF

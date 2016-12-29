@@ -15,15 +15,16 @@ RUN apt-get -y update && \
       docker-engine \
       unzip
 
+RUN curl -o /terraform.zip https://releases.hashicorp.com/terraform/0.8.2/terraform_0.8.2_linux_amd64.zip && \
+    unzip /terraform.zip -d /usr/bin/
+
 #This is for the main application
 RUN /usr/local/bin/pip install \
     boto==2.44.0 \
     requests==2.12.3 \
     nose==1.3.7 \
-    pycrypto==2.6.1 
-
-RUN curl -o /terraform.zip https://releases.hashicorp.com/terraform/0.8.2/terraform_0.8.2_linux_amd64.zip && \
-    unzip /terraform.zip -d /usr/bin/
+    pycryptodome==3.4.3 \
+    paramiko==2.1.1
 
 ADD ./src/python/armory /home/armory/python/armory
 ADD ./src/terraform/ /home/armory/terraform/

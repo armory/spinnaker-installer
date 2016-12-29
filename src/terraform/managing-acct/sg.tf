@@ -1,12 +1,26 @@
 
-resource "aws_security_group" "armory_spinnaker_web" {
+resource "aws_security_group" "armory_spinnaker_elb" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.spinnaker_web_sg_name}"
+  name = "${var.spinnaker_elb_sg_name}"
   description = "Allows web traffic to the dashboard."
 
   ingress {
       from_port = 9000
       to_port = 9000
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+      from_port = 8084
+      to_port = 8084
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+      from_port = 80
+      to_port = 80
       protocol = "tcp"
       cidr_blocks = ["0.0.0.0/0"]
   }
@@ -20,7 +34,7 @@ resource "aws_security_group" "armory_spinnaker_web" {
   }
 
   tags {
-    Name = "${var.spinnaker_web_sg_name}"
+    Name = "${var.spinnaker_elb_sg_name}"
   }
 }
 

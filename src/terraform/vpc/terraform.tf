@@ -6,9 +6,38 @@ resource "aws_vpc" "main" {
     }
 }
 
+resource "aws_key_pair" "deployer" {
+  key_name = "${var.key_name}"
+  public_key = "${var.public_key}"
+}
+
+
+
+/*data "aws_route_table" "vpc_route_table" {
+  vpc_id = "${aws_vpc.main.id}"
+}*/
+
+resource "aws_route_table" "main_route" {
+    vpc_id = "${aws_vpc.main.id}"
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = "${aws_internet_gateway.gw.id}"
+    }
+
+    tags {
+        Name = "main route for integration test"
+    }
+}
+
+resource "aws_main_route_table_association" "a" {
+    vpc_id = "${aws_vpc.main.id}"
+    route_table_id = "${aws_route_table.main_route.id}"
+}
+
 resource "aws_subnet" "main" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.1.0.0/24"
+    availability_zone = "us-west-2c"
 
     tags {
         Name = "Integration Test Subnet"
