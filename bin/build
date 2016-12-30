@@ -23,7 +23,7 @@ sed -e "s|\${PREFIX}|${PREFIX}|g" src/install.sh > build/install.sh
 pushd ./src/terraform
 tar -cvzf   \
     ${INSTALLER_PACKAGE_PATH} \
-    --exclude="vpc" \
+    --exclude="./vpc" \
     --exclude="*tfstate*" \
      ./
 popd
