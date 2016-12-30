@@ -104,7 +104,7 @@ function save_user_responses() {
   echo "Saving to ${mpfile}..."
   # we have to do this to make sure to not put this bash into
   # environment file
-  unset BASH_EXECUTION_STRIN  G
+  unset BASH_EXECUTION_STRING
   local_env=$(set -o posix ; set | grep -E "TF_VAR|AWS")
   echo "$local_env" >> $mpfile
 }
