@@ -16,4 +16,4 @@ SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=${redis_host}
 EOT
 
-service armory-spinnaker start
+service armory-spinnaker restart
