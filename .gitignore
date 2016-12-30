@@ -1,2 +1,6 @@
 build/
 *tfstate*
+*.pyc
+*.zip
+*.key
+*.log

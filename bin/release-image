@@ -1,0 +1,5 @@
+#!/bin/bash
+#${ #stage('Find Images')['context']['amiDetails'][0]['imageId'] }
+echo "Making AMI ID: ${IMAGE_ID} public and adding release tags"
+aws ec2 --region us-west-2 modify-image-attribute --image-id ${IMAGE_ID} --launch-permission "{\"Add\":[{\"Group\":\"all\"}]}"
+aws ec2 --region us-west-2 create-tags --resources ${IMAGE_ID} --tags Key=Release,Value=armory-spinnaker-$(date +%s) Key=Name,Value=armory-spinnaker

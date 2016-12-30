@@ -8,6 +8,11 @@ variable "spinnaker_managed_profile_name" {
   default = "SpinnakerManagedProfile"
 }
 
+variable "spinnaker_ecr_access_policy_name" {
+  description = "The ECR access policy name.  The Spinnaker instances uses ECR to download containers necessary to run Spinnaker"
+  default = "SpinnakerECRAccessPolicy"
+}
+
 variable "armory_spinnaker_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
   default = "armory-spinnaker-elb"
@@ -26,10 +31,14 @@ variable "spinnaker_access_policy_name" {
   default = "SpinnakerAccessPolicy"
 }
 
+variable "associate_public_ip_address" {
+  description = "Wether or not the spinnaker instance itself has a public ip, defaults to false"
+  default = "false"
+}
 
-variable "spinnaker_web_sg_name" {
+variable "spinnaker_elb_sg_name" {
   description = "The name of the security group to give to allow web traffic to the dashboard"
-  default = "spinnaker-armory-web"
+  default = "spinnaker-armory-elb"
 }
 
 
@@ -43,6 +52,10 @@ variable "spinnaker_assume_policy_name" {
   default = "SpinnakerAssumePolicy"
 }
 
+variable "spinnaker_asg_name" {
+  description = "Name given to the default ASG for Spinnaker, this will also be the name of the app that show up in Spinnaker"
+  default = "spinnaker-prod"
+}
 
 variable "spinnaker_s3_access_policy_name" {
   description = "By default Spinnaker uses S3 as it's backing store for pipelines & applications data and requires a policy"

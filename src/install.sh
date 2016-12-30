@@ -84,10 +84,10 @@ function get_var() {
 }
 
 function prompt_user() {
-  get_var "Enter AWS Secret Access Key[e.g. AKIAIOUF8KK9KELEQSFA]:" AWS_ACCESS_KEY_ID  
-  get_var "Enter AWS Secret Access Key[e.g. klBmdoR7M+ULWL3OB828Vb7BbcwQdF+4ZZOlHGk6]:" AWS_SECRET_ACCESS_KEY 
+  get_var "Enter AWS Secret Access Key[e.g. AKIAIOUF8KK9KELEQSFA]:" AWS_ACCESS_KEY_ID
+  get_var "Enter AWS Secret Access Key[e.g. klBmdoR7M+ULWL3OB828Vb7BbcwQdF+4ZZOlHGk6]:" AWS_SECRET_ACCESS_KEY
   get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]:" TF_VAR_armory_s3_bucket
-  get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]:" TF_VAR_s3_front50_path_prefix 
+  get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]:" TF_VAR_s3_front50_path_prefix
   get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]:" TF_VAR_aws_region
   get_var "Enter one or more AWS availablity zones. Spinnaker will be replicated within those zones. [e.g. us-west-2a,us-west2b]:" TF_VAR_availability_zones
   get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]:" TF_VAR_vpc_id

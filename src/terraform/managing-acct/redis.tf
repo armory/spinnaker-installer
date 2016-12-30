@@ -18,7 +18,3 @@ resource "aws_elasticache_replication_group" "armory-spinnaker-cache" {
     Name                        = "armory-spinnaker-cache"
   }
 }
-
-output "armory-spinnaker-cache-endpoint" {
-    value = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
-}

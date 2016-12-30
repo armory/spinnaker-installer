@@ -1,11 +1,4 @@
 #!/bin/bash
-set -x
-cd ${BASE_DIR}
-AWS_DEFAULT_REGION="us-west-2"
-KEYPAIR_NAME="packager-integration-keypair"
-INSTANCE_TYPE="t2.micro"
-SECURITY_GROUPS=["default,spinnaker_allow_armory-spinnaker"]
-
 IMAGE_ID=ami-b7963cd7
 
 result=$(aws sts assume-role \
@@ -22,17 +15,12 @@ AWS_SESSION_TOKEN=`echo $result | awk '{print $3}'`
 echo "running integration with docker: ${DOCKER_IMAGE}"
 $DOCKER_RUN \
   ${DOCKER_ENV} \
+  --entrypoint=/bin/bash \
   -e "IMAGE_ID=${IMAGE_ID}" \
   -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
   -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
   -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
-  -e "AWS_SECURITY_TOKEN=${AWS_SESSION_TOKEN}" \
-  -e "TF_VAR_vpc_id=${TF_VAR_vpc_id}" \
-  -e "TF_VAR_subnet_id=${TF_VAR_subnet_id}" \
-  -e "SPINNAKER_ELB_HOSTNAME=${SPINNAKER_ELB_HOSTNAME}" \
-  -e "SPINNAKER_INSTANCE_IP=${SPINNAKER_INSTANCE_IP}" \
-  -e "SPINNAKER_TEARDOWN=${SPINNAKER_TEARDOWN}" \
-  -e "SPINNAKER_TEST_TIMEOUT=${SPINNAKER_TEST_TIMEOUT}" \
+  -e "AWS_DEFAULT_REGION=us-west-2" \
   -v ${BASE_DIR}/src/python/armory:/home/armory/python/armory \
-  -v ${BASE_DIR}/src/terraform:/home/armory/terraform \
+  -v ${BASE_DIR}/src/terraform/:/home/armory/terraform/ \
   "${DOCKER_IMAGE}"

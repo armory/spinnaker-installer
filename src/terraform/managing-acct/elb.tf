@@ -4,7 +4,7 @@ resource "aws_elb" "armory_spinnaker_elb" {
   subnets = ["${var.armory_subnet_id}"]
   security_groups = [
     "${aws_security_group.armory_spinnaker_default.id}",
-    "${aws_security_group.armory_spinnaker_web.id}"
+    "${aws_security_group.armory_spinnaker_elb.id}"
   ]
 
   listener {
@@ -72,13 +72,9 @@ resource "aws_elb" "armory_spinnaker_elb" {
 
   health_check {
     healthy_threshold   = 2
-    unhealthy_threshold = 2
+    unhealthy_threshold = 10
     timeout             = 3
     target              = "HTTP:5000/healthcheck"
-    interval            = 30
+    interval            = 5
   }
-}
-
-output "spinnaker_url" {
-    value = "${aws_elb.armory_spinnaker_elb.dns_name}"
 }
