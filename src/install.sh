@@ -123,8 +123,8 @@ function create_spinnaker_stack() {
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
 
-  #run_terraform "apply" "./managing-acct"
-  #run_terraform "remote push"
+  run_terraform "apply" "./managing-acct"
+  run_terraform "remote push"
 }
 
 function wait_for_spinnaker() {
