@@ -123,21 +123,24 @@ function create_spinnaker_stack() {
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
 
-  run_terraform "apply" "./managing-acct"
-  run_terraform "remote push"
+  #run_terraform "apply" "./managing-acct"
+  #run_terraform "remote push"
 }
 
 function wait_for_spinnaker() {
-  local spinnaker_url=$(run_terraform "output spinnaker_url" | tr -d '\r')
-  echo "Waiting for ${spinnaker_url} to become available."
+  local terraform_output=$(run_terraform "output" | tr -d '\n\r')
+  local spinnaker_host=$(expr "${terraform_output}" : ".* spinnaker_url = \(.*\)}")
+  echo "Waiting for ${spinnaker_host} to become available."
+  spinnaker_url="http://${spinnaker_host}"
+
   for i in {1..420}; do
     echo -n "."
     #we set +e so we don't error out when curl doesn't return 0
     set +e
-    curl_result=$(curl -s --connect-timeout 2 ${spinnaker_host} &2>>/dev/null)
+    curl_result=$(curl -s --connect-timeout 2 ${spinnaker_url} &2>>/dev/null)
     if [[ ${curl_result} != "" ]];then
       echo ""
-      echo "Your Armory Spinnaker instance is up! Check it out: http://${spinnaker_url}:9000"
+      echo "Your Armory Spinnaker instance is up! Check it out: ${spinnaker_url}"
       exit 0
     fi
     set -e
