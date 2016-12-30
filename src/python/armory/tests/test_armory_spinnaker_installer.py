@@ -32,43 +32,45 @@ class TestSpinnakerInstaller(unittest.TestCase):
     elb_hostname = None
     ssh_client = None
     http_session = None
+    vpc_id = None
+    subnet_id = None
+
     @classmethod
     def setUpClass(cls):
         print("creating session with timeout: %s and back off max: %s" % (TEST_TIMEOUT, BACKOFF_MAX))
         cls.http_session = http.create_session(NUM_RETRIES, BACKOFF_FACTOR, BACKOFF_MAX)
         cls.elb_hostname = env_or_default("SPINNAKER_ELB_HOSTNAME", None)
 
-        vpc_id = env_or_default("TF_VAR_vpc_id", None)
-        subnet_id = env_or_default("TF_VAR_subnet_id", None)
+        cls.vpc_id = env_or_default("TF_VAR_vpc_id", None)
+        cls.subnet_id = env_or_default("TF_VAR_subnet_id", None)
         instance_ip = env_or_default("SPINNAKER_INSTANCE_IP", None)
-        subnet_id = env_or_default("TF_VAR_subnet_id", None)
 
         new_private_key = False
         if path.exists(PUBLIC_KEY_PATH) and path.exists(PRIVATE_KEY_PATH):
             print("using existing public key path: %s" % PRIVATE_KEY_PATH)
-            public_key = open(PUBLIC_KEY_PATH).read()
+            cls.public_key = open(PUBLIC_KEY_PATH).read()
         else:
             new_private_key = True
             print("creating new private key for keypair %s" % PRIVATE_KEY_PATH)
-            private_pem, public_key = crypto.generate_keypair()
+            private_pem, cls.public_key = crypto.generate_keypair()
             with open(PRIVATE_KEY_PATH,'w', 0o600) as f: f.write(private_pem)
-            with open(PUBLIC_KEY_PATH, 'w', 0o600) as f: f.write(public_key)
+            with open(PUBLIC_KEY_PATH, 'w', 0o600) as f: f.write(cls.public_key)
 
-        if not vpc_id or new_private_key:
-            vpc_id, subnet_id = installer.create_vpc(public_key)
+        if not cls.vpc_id or new_private_key:
+            cls.vpc_id, cls.subnet_id = installer.create_vpc(cls.public_key)
         else:
-            print("not creating vpc, using existing: %s" % vpc_id)
+            print("not creating vpc, using existing: %s" % cls.vpc_id)
 
         if not cls.elb_hostname:
             print("using spinnaker installer")
-            result = installer.install_armory_spinnaker(vpc_id, subnet_id)
+            result = installer.install_armory_spinnaker(cls.vpc_id, cls.subnet_id)
             cls.elb_hostname = result['spinnaker_url']
         else:
             print("not creating new spinnaker instance, using existing elb: %s" % cls.elb_hostname)
 
         if not instance_ip:
             conn = ec2.connect_to_region('us-west-2')
-            instance = installer.find_spinnaker_instance(conn, vpc_id, subnet_id)
+            instance = installer.find_spinnaker_instance(conn, cls.vpc_id, cls.subnet_id)
             instance_ip = instance.ip_address
             print("no instance ip passed in, found this one: %s" % instance_ip)
         else:
@@ -85,10 +87,10 @@ class TestSpinnakerInstaller(unittest.TestCase):
     def tearDownClass(cls):
         def str2bool(v):
             return v.lower() in ("yes", "true", "t", "1")
-        should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", True))
+        should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", "True"))
         if should_tear_down:
-            installer.destroy_armory_spinnaker(vpc_id, subnet_id)
-            installer.destroy_vpc()
+            installer.destroy_armory_spinnaker(cls.vpc_id, cls.subnet_id)
+            installer.destroy_vpc(cls.public_key)
 
 
     def test_endpoint_access(self):

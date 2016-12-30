@@ -29,6 +29,9 @@ BASE_VARS = {
 BASE_DIR = "/home/armory/terraform"
 
 def find_spinnaker_instance(conn, vpc_id, subnet_id):
+    import sys
+    #this needs to loop until it finds a valid instance
+    sys.exit(1)
     instance = conn.get_all_instances(filters = {
         'instance-state-code': 16,
         'tag:Name': 'armory-spinnaker',
@@ -56,7 +59,10 @@ def create_vpc(public_key_der):
     else:
         raise Exception("Problem creating VPC with terraform")
 
-def destroy_vpc():
+def destroy_vpc(public_key_der):
+    os.environ.update({
+        "TF_VAR_public_key": public_key_der
+    })
     os.environ.update(BASE_VARS)
     result = terraform_exec("vpc", "destroy -force")
     if result[0] != 0: raise Exception("Could not destroy VPC properly")
