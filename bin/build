@@ -11,7 +11,7 @@ rm -dfr build
 mkdir -p build
 
 #rsync instead of cp is to exclude files
-rsync -av --progress src/terraform/managing-acct/* build/ --exclude "*.backup"
+rsync -av --progress src/terraform/managing-acct/* build/ --exclude "*tfstate*"
 
 PREFIX="stage/${BRANCH_NAME}"
 if [[ "${BRANCH_NAME}" == "master" ]]; then

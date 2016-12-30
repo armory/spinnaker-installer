@@ -46,31 +46,6 @@ resource "aws_iam_role" "SpinnakerManagedProfile" {
 EOF
 }
 
-#
-# Spinnaker Managed Account:
-#
-
-/*
-resource "aws_iam_policy" "SpinnakerManagedPolicy" {
-    name = "SpinnakerManagedPolicy"
-    policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "${aws_iam_role.SpinnakerInstanceProfile.arn}"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-}
-*/
-
 resource "aws_iam_policy" "SpinnakerAccessPolicy" {
     name = "${var.spinnaker_access_policy_name}"
     policy = <<EOF
@@ -91,22 +66,10 @@ resource "aws_iam_policy" "SpinnakerAccessPolicy" {
 EOF
 }
 
-/*
-resource "aws_iam_role_policy_attachment" "SpinnakerManagedAttachment" {
-    role = "${aws_iam_role.SpinnakerManagedProfile.name}"
-    policy_arn = "${aws_iam_policy.SpinnakerManagedPolicy.arn}"
-}
-*/
-
 resource "aws_iam_role_policy_attachment" "SpinnakerAccessAttachment" {
-    role = "${aws_iam_role.SpinnakerManagedProfile.name}"
+    role = "${aws_iam_role.SpinnakerInstanceProfile.name}"
     policy_arn = "${aws_iam_policy.SpinnakerAccessPolicy.arn}"
 }
-
-
-#
-# Spinnaker Managing Account:
-#
 
 resource "aws_iam_policy" "SpinnakerAssumeRolePolicy" {
     name = "${var.spinnaker_assume_policy_name}"

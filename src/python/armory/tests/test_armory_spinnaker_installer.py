@@ -4,6 +4,7 @@ from functools import partial
 from armory import installer, crypto
 from os import chmod, path, environ, O_WRONLY
 import time
+import json
 import os
 from boto.manage.cmdshell import sshclient_from_instance
 import paramiko
@@ -58,10 +59,10 @@ class TestSpinnakerInstaller(unittest.TestCase):
         else:
             print("not creating vpc, using existing: %s" % vpc_id)
 
-        if not cls.elb_hostname or not instance_ip:
+        if not cls.elb_hostname:
             print("using spinnaker installer")
             result = installer.install_armory_spinnaker(vpc_id, subnet_id)
-            cls.elb_url = result['spinnaker_url']
+            cls.elb_hostname = result['spinnaker_url']
         else:
             print("not creating new spinnaker instance, using existing elb: %s" % cls.elb_hostname)
 
@@ -95,8 +96,12 @@ class TestSpinnakerInstaller(unittest.TestCase):
         self.assertEquals(response.status_code, 200)
 
     def test_gate_access(self):
-        response = self.http_session.get("http://%s:8084/" % self.elb_hostname, timeout=1)
+        response = self.http_session.get("http://%s:8084/credentials" % self.elb_hostname, timeout=1)
         self.assertEquals(response.status_code, 200)
+
+        credentials = json.loads(response.text)
+        self.assertEquals(len(credentials), 1)
+        self.assertEquals("default", credentials[0]["name"])
 
     def test_access_to_s3(self):
         status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws s3 ls armory-spkr-integration')

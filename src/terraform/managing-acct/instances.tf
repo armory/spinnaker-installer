@@ -5,6 +5,7 @@ data "template_file" "armory_spinnaker_ud" {
     s3_front50_path_prefix  = "${var.s3_front50_path_prefix}"
     aws_region              = "${var.aws_region}"
     redis_host              = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
+    elb_hostname            = "${aws_elb.armory_spinnaker_elb.dns_name}"
   }
 }
 
@@ -31,7 +32,6 @@ data "aws_ami" "armory_spinnaker_ami" {
 }
 
 resource "aws_launch_configuration" "armory_spinnaker_lc" {
-  name                  = "armory-spinnaker-lc"
   image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
@@ -39,6 +39,10 @@ resource "aws_launch_configuration" "armory_spinnaker_lc" {
   security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
   user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
   key_name              = "${var.key_name}"
+
+  lifecycle {
+     create_before_destroy = true
+  }
 }
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {
@@ -53,6 +57,7 @@ resource "aws_autoscaling_group" "armory-spinnaker-asg" {
   launch_configuration  = "${aws_launch_configuration.armory_spinnaker_lc.name}"
   load_balancers        = ["${aws_elb.armory_spinnaker_elb.name}"]
   vpc_zone_identifier   = ["${var.armory_subnet_id}"]
+
   tag {
     key                 = "Name"
     value               = "armory-spinnaker"
