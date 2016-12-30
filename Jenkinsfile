@@ -4,7 +4,7 @@ node {
 
     stage("Build Script") {
         sh("arm build")
-        sh("arm Integration")
+        sh("arm integration")
     }
 
     /*

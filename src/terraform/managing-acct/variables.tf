@@ -15,17 +15,29 @@ variable "spinnaker_ecr_access_policy_name" {
 
 variable "armory_spinnaker_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
-  default = "armory-spinnaker-elb"
+  default = "armoryspinnaker-prod-elb"
 }
 
 variable "spinnaker_cache_replication_group_id" {
-  default = "replication-group"
+  description = "The name of the elasticache redis cluster"
+  default = "spinnaker-cache"
+}
+
+variable "shared_credentials_file" {
+  description = "The path of the shared credentials file to be used, default ~/.aws/credentials"
+  default = "~/.aws/credentials"
+}
+
+variable "aws_profile" {
+  description = "The profile to use to deploy all the Spinnaker infrastructure"
+  default = "default"
 }
 
 variable "armory_spinnaker_cache_subnet_name" {
   description = "The name of the elasticache subnet security group"
-  default = "armory-spinnaker-cache-subnet"
+  default = "armoryspinnaker-cache-subnet"
 }
+
 variable "spinnaker_access_policy_name" {
   description = "The name of the access policy you want spinnaker to have"
   default = "SpinnakerAccessPolicy"
@@ -38,9 +50,8 @@ variable "associate_public_ip_address" {
 
 variable "spinnaker_elb_sg_name" {
   description = "The name of the security group to give to allow web traffic to the dashboard"
-  default = "spinnaker-armory-elb"
+  default = "spinnakerarmory-prod-elb"
 }
-
 
 variable "spinnaker_default_sg_name" {
   description = "The name of the default security group that allows Spinnaker sub-services to communicate"
@@ -54,14 +65,13 @@ variable "spinnaker_assume_policy_name" {
 
 variable "spinnaker_asg_name" {
   description = "Name given to the default ASG for Spinnaker, this will also be the name of the app that show up in Spinnaker"
-  default = "spinnaker-prod"
+  default = "armoryspinnaker-prod-v000"
 }
 
 variable "spinnaker_s3_access_policy_name" {
   description = "By default Spinnaker uses S3 as it's backing store for pipelines & applications data and requires a policy"
   default = "SpinnakerS3AccessPolicy"
 }
-
 
 variable "vpc_id" {
   description = "The VPC in which you want Spinnaker to live."

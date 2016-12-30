@@ -16,6 +16,9 @@ set -o errexit
 set -o pipefail
 
 SOURCE_URL="http://get.armory.io/${PREFIX}"
+INSTALLER_PACKAGE_NAME="armory-spinnaker-installer.tar.gz"
+TMP_PATH=/tmp/armory
+TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 
 function describe_installer() {
   cat <<EOF
@@ -34,6 +37,7 @@ function describe_installer() {
     - IAM Role for Spinnaker managed account
     - IAM Policy Spinnaker S3 Access
     - IAM Policy Spinnaker assume role permissions
+    - IAM Policy Spinnaker ECR read access
 
 Press 'Enter' key to continue. Ctrl+c to quit.
 EOF
@@ -58,14 +62,14 @@ function run_terraform() {
   docker run -i -t \
     --env-file=$mpfile \
     --workdir=/data \
-    -v /tmp/armory:/data \
+    -v ${TMP_PATH}:/data \
     hashicorp/terraform:light \
-    $1
+    $@
 }
 
 function create_tmp_space() {
-  rm -r /tmp/armory/ || true
-  mkdir -p /tmp/armory/
+  rm -r ${TMP_PATH} || true
+  mkdir -p ${TMP_PATH}
 }
 
 function get_var() {
@@ -96,9 +100,9 @@ function prompt_user() {
 }
 
 function save_user_responses() {
-  mpfile=$(mktemp /tmp/armory/armory-env.tmp)
+  mpfile=/tmp/armory/armory-env.tmp
   echo "Saving to ${mpfile}..."
-  # we have to do this to make sure to not put this bar into
+  # we have to do this to make sure to not put this bash into
   # environment file
   unset BASH_EXECUTION_STRING
   local_env=$(set -o posix ; set | grep -E "TF_VAR|AWS")
@@ -108,9 +112,8 @@ function save_user_responses() {
 function download_tf_templates() {
   files="elb.tf instances.tf provider.tf redis.tf roles.tf sg.tf variables.tf userdata.sh"
   echo "Downloading terraform template files..."
-  for $file in $files; do
-    curl --output "/tmp/armory/${file}" "${SOURCE_URL}/${file}" 2>>/dev/null
-  done
+  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null
+  tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH}
 }
 
 function create_spinnaker_stack() {
@@ -119,21 +122,25 @@ function create_spinnaker_stack() {
     -backend-config=key=${TF_VAR_armory_s3_path_prefix}/terraform/terraform.tfstate \
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
-  run_terraform "apply"
+
+  run_terraform "apply" "./managing-acct"
   run_terraform "remote push"
 }
 
 function wait_for_spinnaker() {
-  local spinnaker_url=$(run_terraform "output spinnaker_url" | tr -d '\r')
-  echo "Waiting for ${spinnaker_url} to become available."
+  local terraform_output=$(run_terraform "output" | tr -d '\n\r')
+  local spinnaker_host=$(expr "${terraform_output}" : ".* spinnaker_url = \(.*\)}")
+  echo "Waiting for ${spinnaker_host} to become available."
+  spinnaker_url="http://${spinnaker_host}"
+
   for i in {1..420}; do
     echo -n "."
     #we set +e so we don't error out when curl doesn't return 0
     set +e
-    curl_result=$(curl -s --connect-timeout 2 ${spinnaker_host} &2>>/dev/null)
+    curl_result=$(curl -s --connect-timeout 2 ${spinnaker_url} &2>>/dev/null)
     if [[ ${curl_result} != "" ]];then
       echo ""
-      echo "Your Armory Spinnaker instance is up! Check it out: http://${spinnaker_url}:9000"
+      echo "Your Armory Spinnaker instance is up! Check it out: ${spinnaker_url}"
       exit 0
     fi
     set -e

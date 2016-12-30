@@ -1,40 +1,37 @@
 #!/bin/bash
 set -e
 
-docker build -t "${DOCKER_IMAGE}" -f etc/Dockerfile .
-
-cd "$(git rev-parse --show-toplevel)"
-
-VERSION=$(git rev-parse HEAD | cut -c -7)
-
-rm -dfr build
-mkdir -p build
-
-#rsync instead of cp is to exclude files
-rsync -av --progress src/terraform/managing-acct/* build/ --exclude "*tfstate*"
-
+BUCKET="s3://armory-web"
+INSTALLER_PACKAGE_NAME=armory-spinnaker-installer.tar.gz
+INSTALLER_PACKAGE_PATH=${BASE_DIR}/build/${INSTALLER_PACKAGE_NAME}
+BUILD_DIR=${BASE_DIR}/build
 PREFIX="stage/${BRANCH_NAME}"
 if [[ "${BRANCH_NAME}" == "master" ]]; then
     PREFIX="install/${GIT_HASH}"
 fi
 
-sed -e "s|\${PREFIX}|${PREFIX}|g" src/install.sh > build/install.sh
+docker build -t "${DOCKER_IMAGE}" -f etc/Dockerfile .
 
-BUCKET="s3://armory-web"
 cd "$(git rev-parse --show-toplevel)"
 
+rm -dfr ${BUILD_DIR}
+mkdir -p ${BUILD_DIR}
+
+sed -e "s|\${PREFIX}|${PREFIX}|g" src/install.sh > build/install.sh
+
+pushd ./src/terraform
+tar -cvzf   \
+    ${INSTALLER_PACKAGE_PATH} \
+    --exclude="./vpc" \
+    --exclude="*tfstate*" \
+     ./
+popd
+
 echo "Uploading to get.armory.io/"
+aws s3 cp ${INSTALLER_PACKAGE_PATH} ${BUCKET}/${PREFIX}/${INSTALLER_PACKAGE_NAME}
+aws s3 cp ${BUILD_DIR}/install.sh ${BUCKET}/${PREFIX}/install.sh
 
-cd build
-
-for f in * ; do
-    aws s3 cp ${f} ${BUCKET}/${PREFIX}/${f}
-done
-
-INSTALLER_PATH=${BUCKET}/${PREFIX}/install.sh
-if [[ "${BRANCH_NAME}" == "master" ]]; then
-  INSTALLER_PATH=${BUCKET}/install.sh
-fi
-
-aws s3 cp install.sh ${INSTALLER_PATH}
 # Update the root url http://get.armory.io to download the latest version
+if [[ "${BRANCH_NAME}" == "master" ]]; then
+  aws s3 cp install.sh ${BUCKET}/install.sh
+fi
