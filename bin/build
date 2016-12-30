@@ -32,6 +32,7 @@ aws s3 cp ${INSTALLER_PACKAGE_PATH} ${BUCKET}/${PREFIX}/${INSTALLER_PACKAGE_NAME
 aws s3 cp ${BUILD_DIR}/install.sh ${BUCKET}/${PREFIX}/install.sh
 
 # Update the root url http://get.armory.io to download the latest version
+echo ${BRANCH_NAME}
 if [[ "${BRANCH_NAME}" == "master" ]]; then
   aws s3 cp install.sh ${BUCKET}/install.sh
 fi
