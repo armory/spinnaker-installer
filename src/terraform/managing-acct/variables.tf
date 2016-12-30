@@ -15,7 +15,7 @@ variable "spinnaker_ecr_access_policy_name" {
 
 variable "armory_spinnaker_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
-  default = "armory-spinnaker-elb"
+  default = "armoryspinnaker-prod-elb"
 }
 
 variable "spinnaker_cache_replication_group_id" {
@@ -24,7 +24,7 @@ variable "spinnaker_cache_replication_group_id" {
 
 variable "armory_spinnaker_cache_subnet_name" {
   description = "The name of the elasticache subnet security group"
-  default = "armory-spinnaker-cache-subnet"
+  default = "armoryspinnaker-cache-subnet"
 }
 variable "spinnaker_access_policy_name" {
   description = "The name of the access policy you want spinnaker to have"
@@ -41,7 +41,6 @@ variable "spinnaker_elb_sg_name" {
   default = "spinnaker-armory-elb"
 }
 
-
 variable "spinnaker_default_sg_name" {
   description = "The name of the default security group that allows Spinnaker sub-services to communicate"
   default = "armory-spinnaker-default"
@@ -54,14 +53,13 @@ variable "spinnaker_assume_policy_name" {
 
 variable "spinnaker_asg_name" {
   description = "Name given to the default ASG for Spinnaker, this will also be the name of the app that show up in Spinnaker"
-  default = "spinnaker-prod"
+  default = "armoryspinnaker-prod-v000"
 }
 
 variable "spinnaker_s3_access_policy_name" {
   description = "By default Spinnaker uses S3 as it's backing store for pipelines & applications data and requires a policy"
   default = "SpinnakerS3AccessPolicy"
 }
-
 
 variable "vpc_id" {
   description = "The VPC in which you want Spinnaker to live."
