@@ -37,6 +37,23 @@ class TestSpinnakerInstaller(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        try:
+            cls.setUpInfrastructure()
+        except Exception as e:
+            print("exception reaised, tearing down infrastructure: %s" % e)
+            cls.tearDownClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        def str2bool(v):
+            return v.lower() in ("yes", "true", "t", "1")
+        should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", "True"))
+        if should_tear_down:
+            installer.destroy_armory_spinnaker(cls.vpc_id, cls.subnet_id)
+            installer.destroy_vpc(cls.public_key)
+
+    @classmethod
+    def setUpInfrastructure(cls):
         print("creating session with timeout: %s and back off max: %s" % (TEST_TIMEOUT, BACKOFF_MAX))
         cls.http_session = http.create_session(NUM_RETRIES, BACKOFF_FACTOR, BACKOFF_MAX)
         cls.elb_hostname = env_or_default("SPINNAKER_ELB_HOSTNAME", None)
@@ -82,15 +99,6 @@ class TestSpinnakerInstaller(unittest.TestCase):
                         NUM_RETRIES,
                         BACKOFF_FACTOR
                         )
-
-    @classmethod
-    def tearDownClass(cls):
-        def str2bool(v):
-            return v.lower() in ("yes", "true", "t", "1")
-        should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", "True"))
-        if should_tear_down:
-            installer.destroy_armory_spinnaker(cls.vpc_id, cls.subnet_id)
-            installer.destroy_vpc(cls.public_key)
 
 
     def test_endpoint_access(self):
