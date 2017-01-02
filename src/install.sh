@@ -57,7 +57,7 @@ function mac_warning() {
 
 function look_for_docker() {
   type docker >/dev/null 2>&1 || { echo >&2 "ERROR: I require docker but it's not installed.  Aborting."; exit 1; }
-  docker ps || { echo >&2 "ERROR: docker deamon is not running.  Aborting."; exit 1; }
+  docker ps >/dev/null 2>&1 || { echo >&2 "ERROR: docker deamon is not running.  Aborting."; exit 1; }
   mac_warning
 }
 
