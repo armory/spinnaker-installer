@@ -112,7 +112,6 @@ function save_user_responses() {
 }
 
 function download_tf_templates() {
-  files="elb.tf instances.tf provider.tf redis.tf roles.tf sg.tf variables.tf userdata.sh"
   echo "Downloading terraform template files..."
   curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH}
