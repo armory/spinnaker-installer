@@ -31,9 +31,11 @@ PUBLIC_KEY_PATH = "%s/public.key" % path.dirname(path.realpath(__file__))
 import waiting
 
 def wait_for(fn):
+    waiting_desc = "Waiting for %s to complete" % str(fn)
     return waiting.wait(fn,
                         timeout_seconds=TEST_TIMEOUT,
-                        sleep_seconds=(BACKOFF_FACTOR, BACKOFF_MAX)
+                        sleep_seconds=(BACKOFF_FACTOR, BACKOFF_MAX),
+                        waiting_for=waiting_desc
                     )
 
 class TestSpinnakerInstaller(unittest.TestCase):
@@ -104,7 +106,6 @@ class TestSpinnakerInstaller(unittest.TestCase):
             conn = ec2.connect_to_region(aws_region)
             find_instance = partial(installer.find_spinnaker_instance,
                                 conn,
-                                cls.test_runid,
                                 cls.vpc_id,
                                 cls.subnet_id,
                             )
@@ -121,8 +122,6 @@ class TestSpinnakerInstaller(unittest.TestCase):
                     instance.ip_address,
                     "ubuntu",
                     PRIVATE_KEY_PATH,
-                    NUM_RETRIES,
-                    BACKOFF_FACTOR
                 )
 
         cls.ssh_client = wait_for(get_ssh_client)

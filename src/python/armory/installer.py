@@ -44,14 +44,16 @@ def get_env_vars(additional_env, run_id):
     return all_env_vars
 
 def find_spinnaker_instance(conn, vpc_id, subnet_id):
-    instance = conn.get_all_instances(filters = {
+    instances = conn.get_all_instances(filters = {
         'instance-state-code': 16,
         'tag:Name': 'armory-spinnaker',
         'subnet-id': subnet_id,
         'vpc-id': vpc_id
-    })[0].instances[0]
-
-    return instance
+    })
+    if len(instances) > 0:
+        return instances[0].instances[0]
+    else:
+        return None
 
 def terraform_exec(run_id, tf_type, tf_command, additional_env={}):
     os.environ.update(get_env_vars(additional_env, run_id))
