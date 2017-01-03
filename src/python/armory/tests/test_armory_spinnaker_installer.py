@@ -64,8 +64,14 @@ class TestSpinnakerInstaller(unittest.TestCase):
             return v.lower() in ("yes", "true", "t", "1")
         should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", "True"))
         if should_tear_down:
-            installer.destroy_armory_spinnaker(cls.test_runid, cls.vpc_id, cls.subnet_id)
-            installer.destroy_vpc(cls.test_runid, cls.public_key)
+            try:
+                installer.destroy_armory_spinnaker(cls.test_runid, cls.vpc_id, cls.subnet_id)
+            except Exception as e:
+                print("destroying armory spinnaker failed: %s" % e)
+            try:
+                installer.destroy_vpc(cls.test_runid, cls.public_key)
+            except Exception as e:
+                print("destroying vpc failed: %s" % e)
         else:
             print("not tearing down infrastructure due to SPINNAKER_TEARDOWN=%s" % should_tear_down)
 
