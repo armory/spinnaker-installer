@@ -4,6 +4,7 @@ import sys
 import paramiko
 import time
 
+
 def exec_cmd(cmd):
     print("Executing: %s" % cmd)
 
@@ -24,18 +25,16 @@ def exec_cmd(cmd):
     print("process return code is: %s" % process.wait())
     return (process.returncode, output)
 
-def ssh_client(ip_address, username, private_key_path, num_retries, backoff):
+def ssh_client(ip_address, username, private_key_path):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print("creating connection for %s" % ip_address)
-    for _ in range(num_retries):
-        try:
-            ssh.connect(ip_address, username=username, key_filename=private_key_path)
-        except Exception as e:
-            print("except connecting to: %s" % ip_address)
-            print("exception: %s" % e)
-            
-        time.sleep(backoff)
+    try:
+        ssh.connect(ip_address, username=username, key_filename=private_key_path)
+    except Exception as e:
+        ssh = None
+        print("except connecting to: %s" % ip_address)
+        print("exception: %s" % e)
 
     return ssh
 

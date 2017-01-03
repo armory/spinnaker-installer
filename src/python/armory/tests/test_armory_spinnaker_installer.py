@@ -4,6 +4,7 @@ from functools import partial
 from armory import installer, crypto
 from os import chmod, path, environ, O_WRONLY
 import time
+import sys
 import json
 import os
 from boto.manage.cmdshell import sshclient_from_instance
@@ -11,12 +12,12 @@ import paramiko
 from armory import cmd
 import unittest
 from armory import http
-
+import random
 
 def env_or_default(key, default_value):
     val = environ.get(key, default_value)
-    if val:
-        return environ.get(key)
+    if val: #this returns false for empty strings
+        return val
     else:
         return default_value
 
@@ -27,6 +28,14 @@ NUM_RETRIES = int(TEST_TIMEOUT/BACKOFF_MAX)
 PRIVATE_KEY_PATH = "%s/private.key" % path.dirname(path.realpath(__file__))
 PUBLIC_KEY_PATH = "%s/public.key" % path.dirname(path.realpath(__file__))
 
+import waiting
+
+def wait_for(fn):
+    return waiting.wait(fn,
+                        timeout_seconds=TEST_TIMEOUT,
+                        sleep_seconds=(BACKOFF_FACTOR, BACKOFF_MAX)
+                    )
+
 class TestSpinnakerInstaller(unittest.TestCase):
 
     elb_hostname = None
@@ -34,14 +43,18 @@ class TestSpinnakerInstaller(unittest.TestCase):
     http_session = None
     vpc_id = None
     subnet_id = None
+    test_runid = None
 
     @classmethod
     def setUpClass(cls):
+        cls.test_runid = env_or_default("SPINNAKER_TEST_RUNID", "%05d" % random.randint(0,99999))
         try:
             cls.setUpInfrastructure()
         except Exception as e:
-            print("exception reaised, tearing down infrastructure: %s" % e)
+            print("exception raised, tearing down infrastructure: %s" % e)
             cls.tearDownClass()
+            #re-raise exception so that tests don't continue
+            raise e
 
     @classmethod
     def tearDownClass(cls):
@@ -49,18 +62,20 @@ class TestSpinnakerInstaller(unittest.TestCase):
             return v.lower() in ("yes", "true", "t", "1")
         should_tear_down = str2bool(env_or_default("SPINNAKER_TEARDOWN", "True"))
         if should_tear_down:
-            installer.destroy_armory_spinnaker(cls.vpc_id, cls.subnet_id)
-            installer.destroy_vpc(cls.public_key)
+            installer.destroy_armory_spinnaker(cls.test_runid, cls.vpc_id, cls.subnet_id)
+            installer.destroy_vpc(cls.test_runid, cls.public_key)
+        else:
+            print("not tearing down infrastructure due to SPINNAKER_TEARDOWN=%s" % should_tear_down)
 
     @classmethod
     def setUpInfrastructure(cls):
         print("creating session with timeout: %s and back off max: %s" % (TEST_TIMEOUT, BACKOFF_MAX))
         cls.http_session = http.create_session(NUM_RETRIES, BACKOFF_FACTOR, BACKOFF_MAX)
         cls.elb_hostname = env_or_default("SPINNAKER_ELB_HOSTNAME", None)
-
         cls.vpc_id = env_or_default("TF_VAR_vpc_id", None)
         cls.subnet_id = env_or_default("TF_VAR_subnet_id", None)
         instance_ip = env_or_default("SPINNAKER_INSTANCE_IP", None)
+        aws_region = env_or_default("TF_VAR_aws_region", "us-west-2")
 
         new_private_key = False
         if path.exists(PUBLIC_KEY_PATH) and path.exists(PRIVATE_KEY_PATH):
@@ -74,32 +89,43 @@ class TestSpinnakerInstaller(unittest.TestCase):
             with open(PUBLIC_KEY_PATH, 'w', 0o600) as f: f.write(cls.public_key)
 
         if not cls.vpc_id or new_private_key:
-            cls.vpc_id, cls.subnet_id = installer.create_vpc(cls.public_key)
+            cls.vpc_id, cls.subnet_id = installer.create_vpc(cls.test_runid, cls.public_key)
         else:
             print("not creating vpc, using existing: %s" % cls.vpc_id)
 
         if not cls.elb_hostname:
             print("using spinnaker installer")
-            result = installer.install_armory_spinnaker(cls.vpc_id, cls.subnet_id)
+            result = installer.install_armory_spinnaker(cls.test_runid, cls.vpc_id, cls.subnet_id)
             cls.elb_hostname = result['spinnaker_url']
         else:
             print("not creating new spinnaker instance, using existing elb: %s" % cls.elb_hostname)
 
         if not instance_ip:
-            conn = ec2.connect_to_region('us-west-2')
-            instance = installer.find_spinnaker_instance(conn, cls.vpc_id, cls.subnet_id)
+            conn = ec2.connect_to_region(aws_region)
+            find_instance = partial(installer.find_spinnaker_instance,
+                                conn,
+                                cls.test_runid,
+                                cls.vpc_id,
+                                cls.subnet_id,
+                            )
+            instance = wait_for(find_instance)
             instance_ip = instance.ip_address
             print("no instance ip passed in, found this one: %s" % instance_ip)
         else:
             print("using instance ip passed in through env vars: %s" % instance_ip)
 
         print("trying to connect to %s" % instance_ip)
-        cls.ssh_client = cmd.ssh_client(instance_ip, "ubuntu",
-                        PRIVATE_KEY_PATH,
-                        NUM_RETRIES,
-                        BACKOFF_FACTOR
-                        )
 
+        get_ssh_client = partial(
+                    cmd.ssh_client,
+                    instance.ip_address,
+                    "ubuntu",
+                    PRIVATE_KEY_PATH,
+                    NUM_RETRIES,
+                    BACKOFF_FACTOR
+                )
+
+        cls.ssh_client = wait_for(get_ssh_client)
 
     def test_endpoint_access(self):
         response = self.http_session.get("http://%s/" % self.elb_hostname, timeout=1)
