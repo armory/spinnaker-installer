@@ -11,12 +11,6 @@ resource "aws_key_pair" "deployer" {
   public_key = "${var.public_key}"
 }
 
-
-
-/*data "aws_route_table" "vpc_route_table" {
-  vpc_id = "${aws_vpc.main.id}"
-}*/
-
 resource "aws_route_table" "main_route" {
     vpc_id = "${aws_vpc.main.id}"
     route {
