@@ -2,20 +2,17 @@ from armory import cmd
 import json
 import os
 
-KEY_NAME="packager-integration-keypair"
-
-
 BASE_VARS = {
     "TF_VAR_armory_s3_bucket": "armory-spkr-integration",
     "TF_VAR_armory_s3_path_prefix": "front50/integration",
     "TF_VAR_availability_zones": "us-west-2c",
     "TF_VAR_aws_region": "us-west-2",
-    "TF_VAR_key_name": KEY_NAME,
     "TF_VAR_associate_public_ip_address": "true",
 }
 
 TEMPLATE_VARS = {
     "TF_VAR_spinnaker_instance_profile_name": "SpinnakerInstanceProfileIntegrationTest",
+    "TF_VAR_key_name": "installer-integration",
     "TF_VAR_spinnaker_managed_profile_name": "SpinnakerManagedProfileIntegrationTest",
     "TF_VAR_spinnaker_access_policy_name": "SpinnakerAccessPolicyIntegrationTest",
     "TF_VAR_spinnaker_elb_sg_name": "spinnaker-web-integration-test",
