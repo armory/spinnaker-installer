@@ -52,16 +52,19 @@ def find_spinnaker_instance(conn, vpc_id, subnet_id):
     else:
         return None
 
-def terraform_exec(run_id, tf_type, tf_command, additional_env={}):
+def terraform_exec(run_id, tf_type, tf_command, tf_options="", additional_env={}):
     os.environ.update(get_env_vars(additional_env, run_id))
-    result = cmd.exec_cmd('cd %s/%s/ && terraform %s -state=/home/armory/terraform/%s/terraform.tfstate' % (BASE_DIR, tf_type, tf_command, tf_type))
+    result = cmd.exec_cmd(
+                'cd %s/%s/ && terraform %s -state=/home/armory/terraform/%s/terraform.tfstate %s' \
+                % (BASE_DIR, tf_type, tf_command, tf_type, tf_options)
+            )
     return result
 
 def create_vpc(run_id, public_key_der):
     public_key_env = { "TF_VAR_public_key": public_key_der }
     result = terraform_exec(run_id, "vpc", "apply", additional_env=public_key_env)
     if result[0] == 0:
-        result = terraform_exec(run_id, "vpc", "output -json", additional_env=public_key_env)
+        result = terraform_exec(run_id, "vpc", "output", tf_options="-json", additional_env=public_key_env)
         value = json.loads(result[1])["vpc_metadata"]["value"]
         return value["vpc_id"], value["subnet_id"]
     else:
@@ -69,7 +72,7 @@ def create_vpc(run_id, public_key_der):
 
 def destroy_vpc(run_id, public_key_der):
     public_key_env = { "TF_VAR_public_key": public_key_der }
-    result = terraform_exec(run_id, "vpc", "destroy -force", public_key_env)
+    result = terraform_exec(run_id, "vpc", "destroy", tf_options="-force", additional_env=public_key_env)
     if result[0] != 0: raise Exception("Could not destroy VPC properly")
 
 def destroy_armory_spinnaker(run_id, vpc_id, subnet_id):
@@ -77,7 +80,7 @@ def destroy_armory_spinnaker(run_id, vpc_id, subnet_id):
         "TF_VAR_vpc_id": vpc_id,
         "TF_VAR_armory_subnet_id": subnet_id,
     }
-    result = terraform_exec(run_id, "managing-acct", "destroy -force", additional_env=env_vars)
+    result = terraform_exec(run_id, "managing-acct", "destroy", tf_options="-force", additional_env=env_vars)
     return result
 
 def install_armory_spinnaker(run_id, vpc_id, subnet_id):
@@ -87,7 +90,7 @@ def install_armory_spinnaker(run_id, vpc_id, subnet_id):
     }
     result = terraform_exec(run_id, "managing-acct", "apply", additional_env=env_vars)
     if result[0] == 0:
-        result = terraform_exec(run_id, "managing-acct", "output -json", additional_env=env_vars)
+        result = terraform_exec(run_id, "managing-acct", "output", tf_options="-json", additional_env=env_vars)
         value = json.loads(result[1])["spinnaker_metadata"]["value"]
         return value
     return None

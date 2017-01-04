@@ -21,7 +21,7 @@ def env_or_default(key, default_value):
     else:
         return default_value
 
-TEST_TIMEOUT = int(env_or_default("SPINNAKER_TEST_TIMEOUT", 600))
+TEST_TIMEOUT = int(env_or_default("SPINNAKER_TEST_TIMEOUT", 900))
 BACKOFF_MAX = 10
 BACKOFF_FACTOR = 1
 NUM_RETRIES = int(TEST_TIMEOUT/BACKOFF_MAX)
@@ -35,7 +35,7 @@ def wait_for(fn):
     return waiting.wait(fn,
                         timeout_seconds=TEST_TIMEOUT,
                         sleep_seconds=(BACKOFF_FACTOR, BACKOFF_MAX),
-                        waiting_for=waiting_desc
+                        on_poll=lambda: print(waiting_desc)
                     )
 
 class TestSpinnakerInstaller(unittest.TestCase):
@@ -109,6 +109,7 @@ class TestSpinnakerInstaller(unittest.TestCase):
             print("not creating new spinnaker instance, using existing elb: %s" % cls.elb_hostname)
 
         if not instance_ip:
+            print("no instance ip was given, finding one")
             conn = ec2.connect_to_region(aws_region)
             find_instance = partial(installer.find_spinnaker_instance,
                                 conn,
