@@ -17,7 +17,7 @@ set -o pipefail
 
 SOURCE_URL="http://get.armory.io/${PREFIX}"
 INSTALLER_PACKAGE_NAME="armory-spinnaker-installer.tar.gz"
-TMP_PATH=/tmp/armory
+TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 
 function describe_installer() {
@@ -103,7 +103,7 @@ function prompt_user() {
 }
 
 function save_user_responses() {
-  mpfile=/tmp/armory/armory-env.tmp
+  mpfile=${TMP_PATH}/armory-env.tmp
   echo "Saving to ${mpfile}..."
   # we have to do this to make sure to not put this bash into
   # environment file
