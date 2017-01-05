@@ -2,11 +2,15 @@ from armory import cmd
 import json
 import os
 
+S3_BUCKET = "armory-spkr-integration"
+AWS_REGION = "us-west-2"
+AWS_REGION_ZONE = "us-west-2c"
+
 BASE_VARS = {
-    "TF_VAR_armory_s3_bucket": "armory-spkr-integration",
+    "TF_VAR_armory_s3_bucket": S3_BUCKET,
     "TF_VAR_armory_s3_path_prefix": "front50/integration",
-    "TF_VAR_availability_zones": "us-west-2c",
-    "TF_VAR_aws_region": "us-west-2",
+    "TF_VAR_availability_zones": AWS_REGION_ZONE,
+    "TF_VAR_aws_region": AWS_REGION,
     "TF_VAR_associate_public_ip_address": "true",
 }
 

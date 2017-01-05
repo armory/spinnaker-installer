@@ -83,7 +83,6 @@ class TestSpinnakerInstaller(unittest.TestCase):
         cls.vpc_id = env_or_default("TF_VAR_vpc_id", None)
         cls.subnet_id = env_or_default("TF_VAR_subnet_id", None)
         instance_ip = env_or_default("SPINNAKER_INSTANCE_IP", None)
-        aws_region = env_or_default("TF_VAR_aws_region", "us-west-2")
 
         new_private_key = False
         if path.exists(PUBLIC_KEY_PATH) and path.exists(PRIVATE_KEY_PATH):
@@ -110,7 +109,7 @@ class TestSpinnakerInstaller(unittest.TestCase):
 
         if not instance_ip:
             print("no instance ip was given, finding one")
-            conn = ec2.connect_to_region(aws_region)
+            conn = ec2.connect_to_region(installer.AWS_REGION)
             find_instance = partial(installer.find_spinnaker_instance,
                                 conn,
                                 cls.vpc_id,
@@ -146,9 +145,9 @@ class TestSpinnakerInstaller(unittest.TestCase):
         self.assertEquals("default", credentials[0]["name"])
 
     def test_access_to_s3(self):
-        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws s3 ls armory-spkr-integration')
+        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws s3 ls %s' % installer.S3_BUCKET)
         self.assertEquals(status, 0, stdout)
 
     def test_access_to_ecr(self):
-        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws ecr get-login --region us-west-2 --registry-ids 515116089304')
+        status, stdout, stderr = cmd.ssh_command(self.ssh_client, 'aws ecr get-login --region %s --registry-ids 515116089304' % installer.AWS_REGION)
         self.assertEquals(status, 0, stdout)
