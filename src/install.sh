@@ -45,6 +45,12 @@ EOF
   read
 }
 
+function error() {
+  echo >&2 "ERROR: $1"
+  echo >&2 "Aborting."
+  exit 1;
+}
+
 function mac_warning() {
   uname -a|grep Darwin
   if [[ "$?" -eq "0" ]]; then
@@ -55,8 +61,8 @@ function mac_warning() {
 }
 
 function look_for_docker() {
-  type docker >/dev/null 2>&1 || { echo >&2 "ERROR: I require docker but it's not installed.  Aborting."; exit 1; }
-  docker ps >/dev/null 2>&1 || { echo >&2 "ERROR: docker deamon is not running.  Aborting."; exit 1; }
+  type docker >/dev/null 2>&1 || { error "I require docker but it's not installed."; }
+  docker ps >/dev/null 2>&1 || { error "Docker deamon is not running."; }
   mac_warning
 }
 
@@ -113,8 +119,8 @@ function save_user_responses() {
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { echo "Error: Could not download." ; exit 1; }
-  tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { echo "Error: Could not untar package." ; exit 1; }
+  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
+  tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
 
 function clean_terraform() {
@@ -128,7 +134,11 @@ function create_spinnaker_stack() {
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
 
-  run_terraform "apply" "./managing-acct" || { echo "Terraform error. Cleaning up partial infrastruction." ; clean_terraform "./managing-acct" ; exit 1; }
+  run_terraform "apply" "./managing-acct" || { 
+    echo "Terraform error. Cleaning up partial infrastruction." 
+    clean_terraform "./managing-acct"
+    error "Terraform error." 
+  }
   run_terraform "remote push"
 }
 
