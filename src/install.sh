@@ -12,7 +12,6 @@ cat << EOF
 
 EOF
 
-set -o errexit
 set -o pipefail
 
 SOURCE_URL="http://get.armory.io/${PREFIX}"
@@ -91,15 +90,15 @@ function get_var() {
 }
 
 function prompt_user() {
-  get_var "Enter AWS Access Key Id [e.g. AKIAIOUF8KK9KELEQSFA]:" AWS_ACCESS_KEY_ID
-  get_var "Enter AWS Secret Access Key [e.g. klBmdoR7M+ULWL3OB828Vb7BbcwQdF+4ZZOlHGk6]:" AWS_SECRET_ACCESS_KEY
-  get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]:" TF_VAR_armory_s3_bucket
-  get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]:" TF_VAR_s3_front50_path_prefix
-  get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]:" TF_VAR_aws_region
-  get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]:" TF_VAR_vpc_id
-  get_var "Enter a Subnet ID. Spinnaker will be installed inside this Subnet. [e.g. subnet-8f5d43d6]:" TF_VAR_armory_subnet_id
-  get_var "Enter one or more AWS availablity zones. Spinnaker will be replicated within those zones. [e.g. us-west-2a,us-west2b]:" TF_VAR_availability_zones
-  get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]" TF_VAR_key_name
+  get_var "Enter AWS Access Key Id [e.g. AKIAIOUF8KK9KELEQSFA]: " AWS_ACCESS_KEY_ID
+  get_var "Enter AWS Secret Access Key [e.g. klBmdoR7M+ULWL3OB828Vb7BbcwQdF+4ZZOlHGk6]: " AWS_SECRET_ACCESS_KEY
+  get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]: " TF_VAR_armory_s3_bucket
+  get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_front50_path_prefix
+  get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
+  get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
+  get_var "Enter a Subnet ID. Spinnaker will be installed inside this Subnet. [e.g. subnet-8f5d43d6]: " TF_VAR_armory_subnet_id
+  get_var "Enter one or more AWS availablity zones. Spinnaker will be replicated within those zones. [e.g. us-west-2a,us-west2b]: " TF_VAR_availability_zones
+  get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name
 }
 
 function save_user_responses() {
@@ -114,8 +113,12 @@ function save_user_responses() {
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null
-  tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH}
+  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { echo "Error: Could not download." ; exit 1; }
+  tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { echo "Error: Could not untar package." ; exit 1; }
+}
+
+function clean_terraform() {
+  run_terraform "destroy" $1
 }
 
 function create_spinnaker_stack() {
@@ -125,7 +128,7 @@ function create_spinnaker_stack() {
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
 
-  run_terraform "apply" "./managing-acct"
+  run_terraform "apply" "./managing-acct" || { echo "Terraform error. Cleaning up partial infrastruction." ; clean_terraform "./managing-acct" ; exit 1; }
   run_terraform "remote push"
 }
 
@@ -149,7 +152,11 @@ function wait_for_spinnaker() {
     sleep 1
   done
   echo ""
-  echo "Couldn't connect to ${spinnaker_url}:9000. It is possible that partial installation has occurred. You probably have AWS resources created through this process that need to be cleaned up."
+  echo "Couldn't connect to ${spinnaker_url}:9000. It is possible that partial" 
+  echo "installation has occurred. You probably have AWS resources created "
+  echo "through this process that need to be cleaned up. You can find the "
+  echo ".tfstate file in the S3 bucket you specified: "
+  echo "    s3://${TF_VAR_armory_s3_bucket}/${TF_VAR_s3_front50_path_prefix}"
   exit 1
 }
 
