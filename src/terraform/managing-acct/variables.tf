@@ -33,7 +33,7 @@ variable "aws_profile" {
   default = "default"
 }
 
-variable "armory_spinnaker_cache_subnet_name" {
+variable "spinnaker_cache_subnet_name" {
   description = "The name of the elasticache subnet security group"
   default = "armoryspinnaker-cache-subnet"
 }

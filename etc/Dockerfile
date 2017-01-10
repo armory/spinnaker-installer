@@ -24,7 +24,8 @@ RUN /usr/local/bin/pip install \
     requests==2.12.3 \
     nose==1.3.7 \
     pycryptodome==3.4.3 \
-    paramiko==2.1.1
+    paramiko==2.1.1 \
+    waiting==1.4.0
 
 ADD ./src/python/armory /home/armory/python/armory
 ADD ./src/terraform/ /home/armory/terraform/
