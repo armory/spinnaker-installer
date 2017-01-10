@@ -7,7 +7,8 @@ sleep 20
 
 cat <<EOT > /etc/default/armory-spinnaker
 #!/bin/bash
-export ARMORY_SPINNAKER_MODE=dev
+# Used to determine what services to start on the instance.
+export ARMORY_SPINNAKER_MODE=ha
 EOT
 
 cat <<EOT > /opt/spinnaker/compose/environment
@@ -32,41 +33,17 @@ EOF
     s3_front50_path_prefix  = "${var.s3_front50_path_prefix}"
     aws_region              = "${var.aws_region}"
     redis_host              = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
-    external_elb   = "${aws_elb.armory_spinnaker_external_elb.dns_name}"
-    internal_elb   = "${aws_elb.armory_spinnaker_internal_elb.dns_name}"
+    external_elb            = "${aws_elb.armory_spinnaker_external_elb.dns_name}"
+    internal_elb            = "${aws_elb.armory_spinnaker_internal_elb.dns_name}"
   }
 }
 
-resource "aws_launch_configuration" "armory_spinnaker_rw_lc" {
-  image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
-  instance_type         = "${var.instance_type}"
-  associate_public_ip_address = "${var.associate_public_ip_address}"
-  iam_instance_profile  = "${aws_iam_role.SpinnakerInstanceProfile.name}"
-  security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
-  user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
-  key_name              = "${var.key_name}"
-
-  lifecycle {
-     create_before_destroy = true
-  }
-}
-
-resource "aws_autoscaling_group" "armory-spinnaker-asg" {
-  availability_zones    = ["${split(",", var.availability_zones)}"]
-  name                  = "${var.spinnaker_asg_name}"
-  max_size              = "${var.asg_max}"
-  min_size              = "${var.asg_min}"
-  desired_capacity      = "${var.asg_desired}"
-  force_delete          = true
-  health_check_grace_period = 300
-  health_check_type         = "ELB"
-  launch_configuration  = "${aws_launch_configuration.armory_spinnaker_rw_lc.name}"
-  load_balancers        = ["${aws_elb.armory_spinnaker_elb.name}"]
-  vpc_zone_identifier   = ["${var.armory_subnet_id}"]
-
-  tag {
-    key                 = "Name"
-    value               = "armory-spinnaker"
-    propagate_at_launch = "true"
-  }
+module "rw-asg" {
+  source = "./asg"
+  asg_name = "armoryspinnaker-ha-poller"
+  asg_size_min = 1
+  asg_size_max = 1
+  asg_size_desired = 1
+  user_date = "${data.template_file.armory_spinnaker_rw_ud.rendered}"
+  load_balancers = ["${aws_elb.armory_spinnaker_external_elb.dns_name}", "${aws_elb.armory_spinnaker_internal_elb.dns_name}"]
 }

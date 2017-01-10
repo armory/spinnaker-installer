@@ -1,10 +1,10 @@
 
-resource "aws_elb" "armory_spinnaker_elb" {
-  name = "${var.armory_spinnaker_elb_name}"
+resource "aws_elb" "armoryspinnaker_external" {
+  name = "${var.armoryspinnaker_external_elb_name}"
   subnets = ["${var.armory_subnet_id}"]
   security_groups = [
-    "${aws_security_group.armory_spinnaker_default.id}",
-    "${aws_security_group.armory_spinnaker_external_elb.id}"
+    "${aws_security_group.armoryspinnaker_default.id}",
+    "${aws_security_group.armoryspinnaker_external.id}"
   ]
 
   listener {
@@ -37,9 +37,9 @@ resource "aws_elb" "armory_spinnaker_elb" {
   }
 }
 
-resource "aws_security_group" "armory_spinnaker_external_elb" {
+resource "aws_security_group" "armoryspinnaker_external" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.spinnaker_external_elb_sg_name}"
+  name = "${var.armoryspinnaker_external_sg_name}"
   description = "Allows web traffic to the dashboard and gate."
 
   ingress {
@@ -72,6 +72,6 @@ resource "aws_security_group" "armory_spinnaker_external_elb" {
   }
 
   tags {
-    Name = "${var.spinnaker_elb_sg_name}"
+    Name = "${var.armoryspinnaker_external_sg_name}"
   }
 }

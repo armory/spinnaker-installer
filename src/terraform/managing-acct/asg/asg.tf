@@ -1,7 +1,14 @@
 
-variable "user_date" {}
 variable "asg_name" {}
-variable "elbs" {}
+variable "asg_size_min" {}
+variable "asg_size_max" {}
+variable "asg_size_desired" {}
+
+variable "user_date" {}
+
+variable "load_balancers" {}
+#variable "extra_security_groups" {}
+#variable "extra_tags" {}
 
 
 variable "release_tag" {
@@ -25,13 +32,14 @@ data "aws_ami" "armory_spinnaker_ami" {
   most_recent = true
 }
 
-resource "aws_launch_configuration" "armory_spinnaker_rw_lc" {
+resource "aws_launch_configuration" "lc" {
   image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile  = "${aws_iam_role.SpinnakerInstanceProfile.name}"
   security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
-  user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
+  #user_data             = "${data.template_file.armory_spinnaker_ud.rendered}"
+  user_data             = "${var.user_data}"
   key_name              = "${var.key_name}"
 
   lifecycle {
@@ -40,21 +48,20 @@ resource "aws_launch_configuration" "armory_spinnaker_rw_lc" {
 }
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {
-  availability_zones    = ["${split(",", var.availability_zones)}"]
-  name                  = "${var.spinnaker_asg_name}"
+  name                  = "${var.asg_name}"
   max_size              = "${var.asg_max}"
   min_size              = "${var.asg_min}"
   desired_capacity      = "${var.asg_desired}"
   force_delete          = true
   health_check_grace_period = 300
   health_check_type         = "ELB"
-  launch_configuration  = "${aws_launch_configuration.armory_spinnaker_rw_lc.name}"
-  load_balancers        = ["${aws_elb.armory_spinnaker_elb.name}"]
-  vpc_zone_identifier   = ["${var.armory_subnet_id}"]
+  launch_configuration  = "${aws_launch_configuration.lc.name}"
+  load_balancers        = ${var.load_balancers}
+  vpc_zone_identifier   = ${var.subnet_ids}
 
   tag {
     key                 = "Name"
-    value               = "armory-spinnaker"
+    value               = "armoryspinnaker"
     propagate_at_launch = "true"
   }
 }
