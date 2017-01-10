@@ -13,9 +13,14 @@ variable "spinnaker_ecr_access_policy_name" {
   default = "SpinnakerECRAccessPolicy"
 }
 
-variable "armory_spinnaker_elb_name" {
+variable "armory_spinnaker_internal_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
-  default = "armoryspinnaker-prod-elb"
+  default = "armoryspinnaker-prod-internal"
+}
+
+variable "armory_spinnaker_external_elb_name" {
+  description = "The name of the ELB that users will use"
+  default = "armoryspinnaker-prod-external"
 }
 
 variable "spinnaker_cache_replication_group_id" {
@@ -48,7 +53,7 @@ variable "associate_public_ip_address" {
   default = "false"
 }
 
-variable "spinnaker_elb_sg_name" {
+variable "spinnaker_external_elb_sg_name" {
   description = "The name of the security group to give to allow web traffic to the dashboard"
   default = "spinnakerarmory-prod-elb"
 }

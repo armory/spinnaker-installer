@@ -1,10 +1,10 @@
 
-resource "aws_elb" "armory_spinnaker_elb" {
+resource "aws_elb" "armory_spinnaker_internal_elb" {
   name = "${var.armory_spinnaker_elb_name}"
   subnets = ["${var.armory_subnet_id}"]
+  internal = true
   security_groups = [
-    "${aws_security_group.armory_spinnaker_default.id}",
-    "${aws_security_group.armory_spinnaker_elb.id}"
+    "${aws_security_group.armory_spinnaker_default.id}"
   ]
 
   listener {
@@ -15,9 +15,9 @@ resource "aws_elb" "armory_spinnaker_elb" {
   }
 
   listener {
-    instance_port     = 9000
+    instance_port     = 8084
     instance_protocol = "http"
-    lb_port           = 80
+    lb_port           = 8084
     lb_protocol       = "http"
   }
 
@@ -39,13 +39,6 @@ resource "aws_elb" "armory_spinnaker_elb" {
     instance_port     = 8080
     instance_protocol = "http"
     lb_port           = 8080
-    lb_protocol       = "http"
-  }
-
-  listener {
-    instance_port     = 8084
-    instance_protocol = "http"
-    lb_port           = 8084
     lb_protocol       = "http"
   }
 
