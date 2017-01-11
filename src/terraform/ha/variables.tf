@@ -13,12 +13,12 @@ variable "spinnaker_ecr_access_policy_name" {
   default = "SpinnakerECRAccessPolicy"
 }
 
-variable "armory_spinnaker_internal_elb_name" {
+variable "armoryspinnaker_internal_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
   default = "armoryspinnaker-prod-internal"
 }
 
-variable "armory_spinnaker_external_elb_name" {
+variable "armoryspinnaker_external_elb_name" {
   description = "The name of the ELB that users will use"
   default = "armoryspinnaker-prod-external"
 }
@@ -38,7 +38,7 @@ variable "aws_profile" {
   default = "default"
 }
 
-variable "armory_spinnaker_cache_subnet_name" {
+variable "armoryspinnaker_cache_subnet_name" {
   description = "The name of the elasticache subnet security group"
   default = "armoryspinnaker-cache-subnet"
 }
@@ -60,7 +60,7 @@ variable "spinnaker_external_elb_sg_name" {
 
 variable "spinnaker_default_sg_name" {
   description = "The name of the default security group that allows Spinnaker sub-services to communicate"
-  default = "armory-spinnaker-default"
+  default = "armoryspinnaker-default"
 }
 
 variable "spinnaker_assume_policy_name" {
@@ -91,8 +91,8 @@ variable "s3_front50_path_prefix" {
   default = "front50"
 }
 
-variable "armory_subnet_id" {
-  description = "The subnet in which you want Spinnaker to live."
+variable "armoryspinnaker_subnet_ids" {
+  description = "The subnets in which you want Spinnaker to live."
 }
 
 variable "aws_region" {

@@ -1,0 +1,11 @@
+variable "asg_name" {}
+variable "asg_size_min" {}
+variable "asg_size_max" {}
+variable "asg_size_desired" {}
+variable "external_dns_name" {}
+variable "internal_dns_name" {}
+variable "load_balancers" {}
+variable "clouddriver_polling" {}
+variable "local_redis" {}
+#variable "extra_security_groups" {}
+#variable "extra_tags" {}

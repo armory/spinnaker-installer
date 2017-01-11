@@ -1,9 +1,9 @@
 resource "aws_elb" "armoryspinnaker_internal" {
   name = "${var.armoryspinnaker_internal_elb_name}"
-  subnets = ${var.armoryspinnaker_subnet_ids}
+  subnets = "${var.armoryspinnaker_subnet_ids}"
   internal = true
   security_groups = [
-    "${aws_security_group.armoryspinnaker_default.id}"
+    "${var.armoryspinnaker_default_security_group_id}"
   ]
 
   listener {

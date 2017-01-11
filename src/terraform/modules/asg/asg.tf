@@ -1,16 +1,4 @@
 
-variable "asg_name" {}
-variable "asg_size_min" {}
-variable "asg_size_max" {}
-variable "asg_size_desired" {}
-variable "external_dns_name" {}
-variable "internal_dns_name" {}
-variable "load_balancers" {}
-variable "clouddriver_polling" {}
-variable "local_redis" {}
-#variable "extra_security_groups" {}
-#variable "extra_tags" {}
-
 data "template_file" "armoryspinnaker_ud" {
   template = <<EOF
 #!/bin/bash
@@ -103,8 +91,8 @@ resource "aws_autoscaling_group" "armory-spinnaker-asg" {
   health_check_grace_period = 300
   health_check_type         = "ELB"
   launch_configuration      = "${aws_launch_configuration.lc.name}"
-  load_balancers            = ${var.load_balancers}
-  vpc_zone_identifier       = ${var.subnet_ids}
+  load_balancers            = "${var.load_balancers}"
+  vpc_zone_identifier       = "${var.subnet_ids}"
 
   tag {
     key                 = "Name"
