@@ -1,6 +1,6 @@
 resource "aws_security_group" "armoryspinnaker_default" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.armoryspinnaker_default_sg_name}"
+  name = "${var.sg_name}"
   description = "Allows communication between Spinnaker services."
 
   # outbound internet access

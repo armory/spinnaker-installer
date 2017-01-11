@@ -1,8 +1,8 @@
 
 resource "aws_elb" "armoryspinnaker_external" {
-  name = "${var.armoryspinnaker_external_elb_name}"
-  subnets = "${var.armoryspinnaker_subnet_ids}"
-  security_groups = "${list(var.armoryspinnaker_default_security_group_id, aws_security_group.armoryspinnaker_external.id)}"
+  name = "${var.elb_name}"
+  subnets = ["${var.subnet_ids}"]
+  security_groups = "${list(var.default_sg_id, aws_security_group.armoryspinnaker_external.id)}"
 
   listener {
     instance_port     = 9000
@@ -36,7 +36,7 @@ resource "aws_elb" "armoryspinnaker_external" {
 
 resource "aws_security_group" "armoryspinnaker_external" {
   vpc_id = "${var.vpc_id}"
-  name = "${var.armoryspinnaker_external_sg_name}"
+  name = "${var.external_sg_name}"
   description = "Allows web traffic to the dashboard and gate."
 
   ingress {
@@ -69,6 +69,6 @@ resource "aws_security_group" "armoryspinnaker_external" {
   }
 
   tags {
-    Name = "${var.armoryspinnaker_external_sg_name}"
+    Name = "${var.external_sg_name}"
   }
 }

@@ -53,9 +53,9 @@ variable "associate_public_ip_address" {
   default = "false"
 }
 
-variable "spinnaker_external_elb_sg_name" {
+variable "armoryspinnaker_external_sg_name" {
   description = "The name of the security group to give to allow web traffic to the dashboard"
-  default = "spinnakerarmory-prod-elb"
+  default = "armoryspinnaker-external"
 }
 
 variable "spinnaker_default_sg_name" {
@@ -82,7 +82,7 @@ variable "vpc_id" {
   description = "The VPC in which you want Spinnaker to live."
 }
 
-variable "armory_s3_bucket" {
+variable "s3_bucket" {
     description = "S3 Bucket to persist Spinnaker's state."
 }
 
@@ -97,10 +97,6 @@ variable "armoryspinnaker_subnet_ids" {
 
 variable "aws_region" {
   description = "The region in which you want Spinnaker to live."
-}
-
-variable "availability_zones" {
-  description = "The availability zone(s) in which you want Spinnaker to live."
 }
 
 variable "instance_type" {

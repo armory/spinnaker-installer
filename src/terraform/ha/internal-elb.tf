@@ -1,3 +1,4 @@
+/*
 resource "aws_elb" "armoryspinnaker_internal" {
   name = "${var.armoryspinnaker_internal_elb_name}"
   subnets = "${var.armoryspinnaker_subnet_ids}"
@@ -70,3 +71,4 @@ resource "aws_elb" "armoryspinnaker_internal" {
     interval            = 5
   }
 }
+*/
