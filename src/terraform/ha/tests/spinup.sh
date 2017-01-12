@@ -34,6 +34,4 @@ export TF_VAR_armoryspinnaker_asg_polling=armoryspinnaker-ha-polling-000${suffix
 #export TF_VAR_existing_cache_endpoint=spinnaker-cache.bfktrz.ng.0001.usw2.cache.amazonaws.com:6379
 
 cd ../
-terraform get
-terraform plan
 terraform apply || terraform destroy
