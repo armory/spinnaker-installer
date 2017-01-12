@@ -91,7 +91,7 @@ resource "aws_autoscaling_group" "armory-spinnaker-asg" {
   health_check_type         = "ELB"
   launch_configuration      = "${aws_launch_configuration.lc.name}"
   load_balancers            = ["${var.load_balancers}"]
-  vpc_zone_identifier       = ["${var.subnet_ids}"]
+  vpc_zone_identifier       = ["${split(",", var.subnet_ids}"]
 
   tag {
     key                 = "Name"

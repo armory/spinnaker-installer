@@ -36,4 +36,4 @@ export TF_VAR_armoryspinnaker_asg_polling=armoryspinnaker-ha-polling-000${suffix
 cd ../
 terraform get
 terraform plan
-terraform apply
+terraform apply || terraform destroy
