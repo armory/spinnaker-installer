@@ -35,47 +35,59 @@ module "redis" {
 
 module "asg-polling" {
   source = "../modules/asg"
-  asg_name = "armoryspinnaker-ha-polling"
+  asg_name = "${var.armoryspinnaker_asg_polling}"
   asg_size_min = 1
   asg_size_max = 1
   asg_size_desired = 1
-  clouddriver_polling = "true"
-  internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
-  external_dns_name = "${module.external-elb.dns_name}" 
   load_balancers = [
     "${module.external-elb.dns_name}", 
     "${aws_elb.armoryspinnaker_internal.dns_name}"
   ]
-  local_redis = false
-  redis_primary_endpoint_address = "${module.redis.primary_endpoint_address}"
   instance_type = "${var.instance_type}"
   associate_public_ip_address = false
   default_sg_id = "${module.default-sg.id}"
-  
   key_name = "${var.key_name}"
+  instance_profile = "${var.armoryspinnaker_instance_profile_name}"
+  subnet_ids = "${var.armoryspinnaker_subnet_ids}"
+  
+  # User-data info:
+  clouddriver_polling = "false"
+  internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
+  external_dns_name = "${module.external-elb.dns_name}" 
+  local_redis = false
+  redis_primary_endpoint_address = "${module.redis.primary_endpoint_address}"
   s3_bucket = "${var.s3_bucket}"
   s3_prefix = "${var.s3_prefix}"
   default_aws_region = "${var.aws_region}"
-  instance_profile = "${var.armoryspinnaker_instance_profile_name}"
-  subnet_ids = "${var.armoryspinnaker_subnet_ids}"
 }
 
-/*
 module "asg-nonpolling" {
   source = "../modules/asg"
-  asg_name = "armoryspinnaker-ha"
+  asg_name = "${var.armoryspinnaker_asg}"
   asg_size_min = 2
   asg_size_max = 2
   asg_size_desired = 2
-  clouddriver_polling = "false"
-  internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
-  external_dns_name = "localhost" #"${aws_elb.armoryspinnaker_external.dns_name}" 
   load_balancers = [
-    #"${aws_elb.armoryspinnaker_external.dns_name}", 
+    "${module.external-elb.dns_name}", 
     "${aws_elb.armoryspinnaker_internal.dns_name}"
   ]
+  instance_type = "${var.instance_type}"
+  associate_public_ip_address = false
+  default_sg_id = "${module.default-sg.id}"
+  key_name = "${var.key_name}"
+  instance_profile = "${var.armoryspinnaker_instance_profile_name}"
+  subnet_ids = "${var.armoryspinnaker_subnet_ids}"
+  
+  # User-data info:
+  clouddriver_polling = "false"
+  internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
+  external_dns_name = "${module.external-elb.dns_name}" 
+  local_redis = false
+  redis_primary_endpoint_address = "${module.redis.primary_endpoint_address}"
+  s3_bucket = "${var.s3_bucket}"
+  s3_prefix = "${var.s3_prefix}"
+  default_aws_region = "${var.aws_region}"
 }
-*/
 
 #
 # Load Balancing

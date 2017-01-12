@@ -77,7 +77,7 @@ variable "armoryspinnaker_external_elb_name" {
 #
 
 variable "armoryspinnaker_cache_name" {
-  description = "The name of the elasticache redis cluster"
+  description = "The name of the elasticache redis cluster to create"
   default = "armoryspinnaker"
 }
 
@@ -118,26 +118,15 @@ variable "key_name" {
 # Instances / Replication
 #
 
-/*
-variable "armoryspinnaker_asg_name" {
-  description = "Name given to the default ASG for Spinnaker, this will also be the name of the app that show up in Spinnaker"
-  default = "armoryspinnaker-prod-v000"
+variable "armoryspinnaker_asg" {
+  default = "armoryspinnaker-ha-v000"
 }
-*/
+
+variable "armoryspinnaker_asg_polling" {
+  default = "armoryspinnaker-ha-polling-v000"
+}
 
 variable "instance_type" {
   description = "The instance type in which you want Spinnaker to live."
   default = "m3.2xlarge"
-}
-
-variable "asg_max" {
-    default = 1
-}
-
-variable "asg_min" {
-    default = 1
-}
-
-variable "asg_desired" {
-    default = 1
 }
