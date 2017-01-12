@@ -49,6 +49,9 @@ module "asg-polling" {
   subnet_ids = "${var.armoryspinnaker_subnet_ids}"
   
   # User-data info:
+  mode = "ha"
+  default_iam_role = "${var.armoryspinnaker_instance_profile_name}"
+  default_assume_role = "${var.armoryspinnaker_managed_profile_name}"
   clouddriver_polling = "false"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
@@ -74,6 +77,9 @@ module "asg-nonpolling" {
   subnet_ids = "${var.armoryspinnaker_subnet_ids}"
   
   # User-data info:
+  mode = "ha"
+  default_iam_role = "${var.armoryspinnaker_instance_profile_name}"
+  default_assume_role = "${var.armoryspinnaker_managed_profile_name}"
   clouddriver_polling = "false"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 

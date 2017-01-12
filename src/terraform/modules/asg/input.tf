@@ -15,6 +15,8 @@ variable "s3_prefix" {}
 variable "subnet_ids" {}
 variable "default_aws_region" {}
 variable "instance_profile" {}
-
+variable "mode" {}
 variable "redis_primary_endpoint_address" {}
 variable "local_redis" {}
+variable "default_iam_role" {}
+variable "default_assume_role" {}

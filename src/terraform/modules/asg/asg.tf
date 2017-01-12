@@ -9,7 +9,7 @@ sleep 20
 cat <<EOT > /etc/default/armory-spinnaker
 #!/bin/bash
 # Used to determine what services to start on the instance.
-export ARMORY_SPINNAKER_MODE=ha
+export ARMORY_SPINNAKER_MODE=$${mode}
 export LOCAL_REDIS=$${local_redis}
 EOT
 
@@ -19,12 +19,16 @@ ARMORYSPINNAKER_S3_BUCKET=$${s3_bucket}
 ARMORYSPINNAKER_S3_PREFIX=$${s3_prefix}
 SPINNAKER_AWS_DEFAULT_REGION=$${default_aws_region}
 
-# Gate URL used by Deck:
-API_HOST=http://$${external_dns_name}:8084
+# Used by the Spinnaker AWS Provider:
+SPINNAKER_AWS_DEFAULT_IAM_ROLE=$${default_iam_role}
+SPINNAKER_AWS_DEFAULT_ASSUME_ROLE=$${default_assume_role}
 
-# Used by the Spinnaker subservices to communicate internally:
-DEFAULT_DNS_NAME=$${internal_dns_name}
+# Used by Gate and/or Deck:
+API_HOST=http://$${external_dns_name}:8084
 AUTH_ENABLED=false
+
+# Used by the Spinnaker subservices:
+DEFAULT_DNS_NAME=$${internal_dns_name}
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=$${redis_host}
 CLOUDDRIVER_POLLING=$${clouddriver_polling}
@@ -42,6 +46,9 @@ EOF
     clouddriver_polling     = "${var.clouddriver_polling}"
     local_redis             = "${var.local_redis}"
     redis_host              = "${var.redis_primary_endpoint_address}"
+    mode                    = "${var.mode}"
+    default_iam_role        = "${default_iam_role}"
+    default_assume_role     = "${default_assume_role}"
   }
 }
 
