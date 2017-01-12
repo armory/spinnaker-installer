@@ -22,6 +22,7 @@ module "managing-roles" {
 }
 
 module "redis" {
+    use_existing_cache = "${var.use_existing_cache}"
     source = "../modules/redis"
     cache_subnet_name = "${var.armoryspinnaker_cache_subnet_name}"
     subnet_ids = "${var.armoryspinnaker_subnet_ids}"
@@ -39,10 +40,7 @@ module "asg-polling" {
   asg_size_min = 1
   asg_size_max = 1
   asg_size_desired = 1
-  load_balancers = [
-    "${module.external-elb.dns_name}", 
-    "${aws_elb.armoryspinnaker_internal.dns_name}"
-  ]
+  load_balancers = "${module.external-elb.dns_name},${aws_elb.armoryspinnaker_internal.dns_name}"
   instance_type = "${var.instance_type}"
   associate_public_ip_address = false
   default_sg_id = "${module.default-sg.id}"
@@ -55,7 +53,7 @@ module "asg-polling" {
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
   local_redis = false
-  redis_primary_endpoint_address = "${module.redis.primary_endpoint_address}"
+  redis_primary_endpoint_address = "${var.use_existing_cache ? var.existing_cache_endpoint : module.redis.primary_endpoint_address}"
   s3_bucket = "${var.s3_bucket}"
   s3_prefix = "${var.s3_prefix}"
   default_aws_region = "${var.aws_region}"
@@ -67,10 +65,7 @@ module "asg-nonpolling" {
   asg_size_min = 2
   asg_size_max = 2
   asg_size_desired = 2
-  load_balancers = [
-    "${module.external-elb.dns_name}", 
-    "${aws_elb.armoryspinnaker_internal.dns_name}"
-  ]
+  load_balancers = "${module.external-elb.dns_name},${aws_elb.armoryspinnaker_internal.dns_name}"
   instance_type = "${var.instance_type}"
   associate_public_ip_address = false
   default_sg_id = "${module.default-sg.id}"
@@ -83,7 +78,7 @@ module "asg-nonpolling" {
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
   local_redis = false
-  redis_primary_endpoint_address = "${module.redis.primary_endpoint_address}"
+  redis_primary_endpoint_address = "${var.use_existing_cache ? var.existing_cache_endpoint : module.redis.primary_endpoint_address}"
   s3_bucket = "${var.s3_bucket}"
   s3_prefix = "${var.s3_prefix}"
   default_aws_region = "${var.aws_region}"

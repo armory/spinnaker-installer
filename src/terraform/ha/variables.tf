@@ -76,6 +76,16 @@ variable "armoryspinnaker_external_elb_name" {
 # Cache
 #
 
+variable "use_existing_cache" {
+  description = "Should a new cache be created or should an existing cache be used."
+  default = "false"  
+}
+
+variable "existing_cache_endpoint" {
+  description = "If existing cache should be used, what is its primary endpoint"
+  default = "not_used"
+}
+
 variable "armoryspinnaker_cache_name" {
   description = "The name of the elasticache redis cluster to create"
   default = "armoryspinnaker"

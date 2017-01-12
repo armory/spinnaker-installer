@@ -6,8 +6,6 @@ variable "external_dns_name" {}
 variable "internal_dns_name" {}
 variable "load_balancers" {}
 variable "clouddriver_polling" {}
-variable "local_redis" {}
-variable "redis_primary_endpoint_address" {}
 variable "instance_type" {}
 variable "associate_public_ip_address" {}
 variable "default_sg_id" {}
@@ -17,3 +15,6 @@ variable "s3_prefix" {}
 variable "subnet_ids" {}
 variable "default_aws_region" {}
 variable "instance_profile" {}
+
+variable "redis_primary_endpoint_address" {}
+variable "local_redis" {}

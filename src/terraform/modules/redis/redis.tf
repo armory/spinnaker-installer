@@ -1,10 +1,14 @@
 
-resource "aws_elasticache_subnet_group" "armory-spinnaker-cache-subnet" {
+resource "aws_elasticache_subnet_group" "armory-spinnaker-cache-subnet" {    
+    count = "${var.use_existing_cache?0:1}"
+
     name = "${var.cache_subnet_name}"
     subnet_ids = ["${var.subnet_ids}"]
 }
 
 resource "aws_elasticache_replication_group" "armoryspinnaker-cache" {
+  count = "${var.use_existing_cache?0:1}"
+
   replication_group_id          = "${var.cache_name}"
   replication_group_description = "Spinnaker's cache"
   number_cache_clusters         = "2"
