@@ -24,7 +24,6 @@ resource "aws_security_group" "armoryspinnaker_default" {
     from_port = 0
     to_port = 65535
     protocol = "tcp"
-    security_group_id = "${aws_security_group.armoryspinnaker_default.id}"
     self = true
   }
 
@@ -32,3 +31,4 @@ resource "aws_security_group" "armoryspinnaker_default" {
     Name = "armoryspinnaker-default"
   }
 }
+

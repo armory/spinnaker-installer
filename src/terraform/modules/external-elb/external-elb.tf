@@ -2,7 +2,7 @@
 resource "aws_elb" "armoryspinnaker_external" {
   name = "${var.elb_name}"
   subnets = ["${var.subnet_ids}"]
-  security_groups = "${list(var.default_sg_id, aws_security_group.armoryspinnaker_external.id)}"
+  security_groups = ["${list(var.default_sg_id, aws_security_group.armoryspinnaker_external.id)}"]
 
   listener {
     instance_port     = 9000

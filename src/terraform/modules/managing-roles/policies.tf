@@ -4,7 +4,7 @@
 #
 
 resource "aws_iam_role" "SpinnakerInstanceProfile" {
-    name = "${var.spinnaker_instance_profile_name}"
+    name = "${var.instance_profile_name}"
     assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -23,7 +23,7 @@ EOF
 }
 
 /*resource "aws_iam_role" "SpinnakerPackerProfile" {
-    name = "${var.spinnaker_packer_profile_namee}"
+    name = "${var.packer_profile_namee}"
     assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -44,12 +44,12 @@ EOF
 */
 
 resource "aws_iam_instance_profile" "SpinnakerInstanceProfile" {
-    name = "${var.spinnaker_instance_profile_name}"
+    name = "${var.instance_profile_name}"
     roles = ["${aws_iam_role.SpinnakerInstanceProfile.name}"]
 }
 
 resource "aws_iam_role" "SpinnakerManagedProfile" {
-    name = "${var.spinnaker_managed_profile_name}"
+    name = "${var.managed_profile_name}"
     assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -68,7 +68,7 @@ EOF
 }
 
 resource "aws_iam_policy" "SpinnakerAccessPolicy" {
-    name = "${var.spinnaker_access_policy_name}"
+    name = "${var.access_policy_name}"
     policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -93,7 +93,7 @@ resource "aws_iam_role_policy_attachment" "SpinnakerAccessAttachment" {
 }
 
 resource "aws_iam_policy" "SpinnakerAssumeRolePolicy" {
-    name = "${var.spinnaker_assume_policy_name}"
+    name = "${var.assume_policy_name}"
     policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -116,7 +116,7 @@ resource "aws_iam_role_policy_attachment" "SpinnakerAssumeRoleAttachment" {
 }
 
 resource "aws_iam_policy" "SpinnakerECRAccessPolicy" {
-  name = "${var.spinnaker_ecr_access_policy_name}"
+  name = "${var.ecr_access_policy_name}"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -143,7 +143,7 @@ resource "aws_iam_role_policy_attachment" "SpinnakerECRAccessAttachment" {
 }
 
 resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
-  name = "${var.spinnaker_s3_access_policy_name}"
+  name = "${var.s3_access_policy_name}"
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -152,7 +152,7 @@ resource "aws_iam_policy" "SpinnakerS3AccessPolicy" {
             "Effect": "Allow",
             "Action": "s3:*",
             "Resource": [
-                "arn:aws:s3:::${var.armory_s3_bucket}*"
+                "arn:aws:s3:::${var.s3_bucket}*"
             ]
         }
     ]

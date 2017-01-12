@@ -1,6 +1,8 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+set -e 
+
 export TF_VAR_aws_region=us-west-2
 export TF_VAR_vpc_id=vpc-xxxx
 export TF_VAR_s3_bucket=armory-xxxx

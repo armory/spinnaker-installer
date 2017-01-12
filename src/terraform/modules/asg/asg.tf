@@ -15,9 +15,9 @@ EOT
 
 cat <<EOT > /opt/spinnaker/compose/environment
 # Used by Spinnaker/front50 to persist pipelines:
-ARMORY_S3_BUCKET=$${s3_bucket}
-ARMORY_S3_FRONT50_PATH_PREFIX=$${s3_front50_path_prefix}
-SPINNAKER_AWS_DEFAULT_REGION=$${aws_region}
+ARMORYSPINNAKER_S3_BUCKET=$${s3_bucket}
+ARMORYSPINNAKER_S3_PREFIX=$${s3_prefix}
+SPINNAKER_AWS_DEFAULT_REGION=$${default_aws_region}
 
 # Gate URL used by Deck:
 API_HOST=http://$${external_dns_name}:8084
@@ -34,14 +34,14 @@ service armory-spinnaker restart
 EOF
 
   vars {
-    s3_bucket               = "${var.armory_s3_bucket}"
-    s3_front50_path_prefix  = "${var.s3_front50_path_prefix}"
-    aws_region              = "${var.aws_region}"
-    redis_host              = "${aws_elasticache_replication_group.armory-spinnaker-cache.primary_endpoint_address}"
-    external_dns_name       = "${aws_elb.armory_spinnaker_external_elb.dns_name}"
-    internal_dns_name       = "${aws_elb.armory_spinnaker_internal_elb.dns_name}"
+    default_aws_region      = "${var.default_aws_region}"
+    s3_bucket               = "${var.s3_bucket}"
+    s3_prefix               = "${var.s3_prefix}"
+    external_dns_name       = "${var.external_dns_name}"
+    internal_dns_name       = "${var.internal_dns_name}"
     clouddriver_polling     = "${var.clouddriver_polling}"
     local_redis             = "${var.local_redis}"
+    redis_host              = "${var.redis_primary_endpoint_address}"
   }
 }
 
@@ -71,10 +71,9 @@ resource "aws_launch_configuration" "lc" {
   image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
-  iam_instance_profile  = "${aws_iam_role.SpinnakerInstanceProfile.name}"
-  security_groups       = ["${aws_security_group.armory_spinnaker_default.id}"]
+  iam_instance_profile  = "${var.instance_profile}"
+  security_groups       = ["${var.default_sg_id}"]
   user_data             = "${data.template_file.armoryspinnaker_ud.rendered}"
-  user_data             = "${var.user_data}"
   key_name              = "${var.key_name}"
 
   lifecycle {
@@ -84,15 +83,15 @@ resource "aws_launch_configuration" "lc" {
 
 resource "aws_autoscaling_group" "armory-spinnaker-asg" {
   name                      = "${var.asg_name}"
-  max_size                  = "${var.asg_max}"
-  min_size                  = "${var.asg_min}"
-  desired_capacity          = "${var.asg_desired}"
+  max_size                  = "${var.asg_size_max}"
+  min_size                  = "${var.asg_size_min}"
+  desired_capacity          = "${var.asg_size_desired}"
   force_delete              = true
   health_check_grace_period = 300
   health_check_type         = "ELB"
   launch_configuration      = "${aws_launch_configuration.lc.name}"
-  load_balancers            = "${var.load_balancers}"
-  vpc_zone_identifier       = "${var.subnet_ids}"
+  load_balancers            = ["${var.load_balancers}"]
+  vpc_zone_identifier       = ["${var.subnet_ids}"]
 
   tag {
     key                 = "Name"

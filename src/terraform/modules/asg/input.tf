@@ -7,5 +7,13 @@ variable "internal_dns_name" {}
 variable "load_balancers" {}
 variable "clouddriver_polling" {}
 variable "local_redis" {}
-#variable "extra_security_groups" {}
-#variable "extra_tags" {}
+variable "redis_primary_endpoint_address" {}
+variable "instance_type" {}
+variable "associate_public_ip_address" {}
+variable "default_sg_id" {}
+variable "key_name" {}
+variable "s3_bucket" {}
+variable "s3_prefix" {}
+variable "subnet_ids" {}
+variable "default_aws_region" {}
+variable "instance_profile" {}
