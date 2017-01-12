@@ -40,7 +40,7 @@ module "asg-polling" {
   asg_size_min = 1
   asg_size_max = 1
   asg_size_desired = 1
-  load_balancers = "${module.external-elb.dns_name},${aws_elb.armoryspinnaker_internal.dns_name}"
+  load_balancers = "${var.armoryspinnaker_external_elb_name},${var.armoryspinnaker_internal_elb_name}"
   instance_type = "${var.instance_type}"
   associate_public_ip_address = false
   default_sg_id = "${module.default-sg.id}"
@@ -65,7 +65,7 @@ module "asg-nonpolling" {
   asg_size_min = 2
   asg_size_max = 2
   asg_size_desired = 2
-  load_balancers = "${module.external-elb.dns_name},${aws_elb.armoryspinnaker_internal.dns_name}"
+  load_balancers = "${var.armoryspinnaker_external_elb_name},${var.armoryspinnaker_internal_elb_name}"
   instance_type = "${var.instance_type}"
   associate_public_ip_address = false
   default_sg_id = "${module.default-sg.id}"
@@ -99,7 +99,7 @@ module "external-elb" {
 
 resource "aws_elb" "armoryspinnaker_internal" {
   name = "${var.armoryspinnaker_internal_elb_name}"
-  subnets = ["${var.armoryspinnaker_subnet_ids}"]
+  subnets = ["${split(",", var.armoryspinnaker_subnet_ids)}"]
   internal = true
   security_groups = [
     "${module.default-sg.id}"
