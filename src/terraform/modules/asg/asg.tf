@@ -28,10 +28,11 @@ API_HOST=http://$${external_dns_name}:8084
 AUTH_ENABLED=false
 
 # Used by the Spinnaker subservices:
+GLOBAL_SPINNAKER_ENVIRONMENT=armory
 DEFAULT_DNS_NAME=$${internal_dns_name}
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=$${redis_host}
-CLOUDDRIVER_POLLING=$${clouddriver_polling}
+CLOUDDRIVER_OPTS="-Dspring.profiles.active=$${clouddriver_profiles}"
 EOT
 
 service armory-spinnaker restart
@@ -43,12 +44,12 @@ EOF
     s3_prefix               = "${var.s3_prefix}"
     external_dns_name       = "${var.external_dns_name}"
     internal_dns_name       = "${var.internal_dns_name}"
-    clouddriver_polling     = "${var.clouddriver_polling}"
+    clouddriver_profiles    = "${var.clouddriver_profiles}"
     local_redis             = "${var.local_redis}"
     redis_host              = "${var.redis_primary_endpoint_address}"
     mode                    = "${var.mode}"
-    default_iam_role        = "${default_iam_role}"
-    default_assume_role     = "${default_assume_role}"
+    default_iam_role        = "${var.default_iam_role}"
+    default_assume_role     = "${var.default_assume_role}"
   }
 }
 
@@ -75,7 +76,7 @@ data "aws_ami" "armory_spinnaker_ami" {
 }
 
 resource "aws_launch_configuration" "lc" {
-  image_id              = "${data.aws_ami.armory_spinnaker_ami.id}"
+  image_id              = "ami-34e75a54" #"${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile  = "${var.instance_profile}"

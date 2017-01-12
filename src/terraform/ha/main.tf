@@ -52,7 +52,7 @@ module "asg-polling" {
   mode = "ha"
   default_iam_role = "${var.armoryspinnaker_instance_profile_name}"
   default_assume_role = "${var.armoryspinnaker_managed_profile_name}"
-  clouddriver_polling = "false"
+  clouddriver_profiles = "local"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
   local_redis = false
@@ -80,7 +80,7 @@ module "asg-nonpolling" {
   mode = "ha"
   default_iam_role = "${var.armoryspinnaker_instance_profile_name}"
   default_assume_role = "${var.armoryspinnaker_managed_profile_name}"
-  clouddriver_polling = "false"
+  clouddriver_profiles = "local,nonpolling"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
   local_redis = false

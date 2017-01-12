@@ -12,7 +12,7 @@ export TF_VAR_vpc_id=vpc-c54befa2
 export TF_VAR_s3_bucket=armory-spkr-integration
 export TF_VAR_s3_prefix=test${suffix}
 export TF_VAR_armoryspinnaker_subnet_ids=subnet-9427e3f3,subnet-98110fee
-export TF_VAR_key_name=andrewtest
+export TF_VAR_key_name=andrew-staging
 
 # Overrides:
 export TF_VAR_armoryspinnaker_assume_policy_name=SpinnakerAssumePolicy${suffix}

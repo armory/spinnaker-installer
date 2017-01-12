@@ -5,7 +5,7 @@ variable "asg_size_desired" {}
 variable "external_dns_name" {}
 variable "internal_dns_name" {}
 variable "load_balancers" {}
-variable "clouddriver_polling" {}
+variable "clouddriver_profiles" {}
 variable "instance_type" {}
 variable "associate_public_ip_address" {}
 variable "default_sg_id" {}
