@@ -21,17 +21,19 @@ export TF_VAR_armoryspinnaker_managed_profile_name=SpinnakerManagedProfile${suff
 export TF_VAR_armoryspinnaker_ecr_access_policy_name=SpinnakerECRAccessPolicy${suffix}
 export TF_VAR_armoryspinnaker_access_policy_name=SpinnakerAccessPolicy${suffix}
 export TF_VAR_armoryspinnaker_s3_access_policy_name=SpinnakerS3AccessPolicy${suffix}
-export TF_VAR_armoryspinnaker_internal_elb_name=internal${suffix}
-export TF_VAR_armoryspinnaker_external_elb_name=external${suffix}
+export TF_VAR_armoryspinnaker_internal_elb_name=armoryspinnaker-internal${suffix}
+export TF_VAR_armoryspinnaker_external_elb_name=armoryspinnaker-external${suffix}
 export TF_VAR_armoryspinnaker_cache_name=armoryspinnaker${suffix}
-export TF_VAR_armoryspinnaker_cache_subnet_name=subnet${suffix}
-export TF_VAR_armoryspinnaker_external_sg_name=external${suffix}
-export TF_VAR_armoryspinnaker_default_sg_name=default${suffix}
-export TF_VAR_armoryspinnaker_asg=000${suffix}
-export TF_VAR_armoryspinnaker_asg_polling=000${suffix}
+export TF_VAR_armoryspinnaker_cache_subnet_name=armoryspinnaker-cache-subnet${suffix}
+export TF_VAR_armoryspinnaker_external_sg_name=armoryspinnaker-external${suffix}
+export TF_VAR_armoryspinnaker_default_sg_name=armoryspinnaker-default${suffix}
+export TF_VAR_armoryspinnaker_asg=armoryspinnaker-ha000${suffix}
+export TF_VAR_armoryspinnaker_asg_polling=armoryspinnaker-ha-polling-000${suffix}
 
 #export TF_VAR_use_existing_cache=true
 #export TF_VAR_existing_cache_endpoint=spinnaker-cache.bfktrz.ng.0001.usw2.cache.amazonaws.com:6379
 
 cd ../
+terraform get
 terraform plan
+terraform apply
