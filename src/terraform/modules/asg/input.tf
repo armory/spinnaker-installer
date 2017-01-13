@@ -20,3 +20,4 @@ variable "redis_primary_endpoint_address" {}
 variable "local_redis" {}
 variable "default_iam_role" {}
 variable "default_assume_role" {}
+variable "ami_id" {}

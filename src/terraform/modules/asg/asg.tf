@@ -57,7 +57,7 @@ EOF
 
 resource "aws_launch_configuration" "lc" {
   # TODO: name
-  image_id              = "${loopup(var.armoryspinnaker_ami, var.aws_region)}" 
+  image_id              = "${var.ami_id}" 
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile  = "${var.instance_profile}"
