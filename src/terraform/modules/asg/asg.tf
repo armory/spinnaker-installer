@@ -29,6 +29,8 @@ AUTH_ENABLED=false
 
 # Used by the Spinnaker subservices:
 GLOBAL_SPINNAKER_ENVIRONMENT=armory
+# Binds all spring servers to all addresses
+SERVER_ADDRESS=0.0.0.0
 DEFAULT_DNS_NAME=$${internal_dns_name}
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=$${redis_host}
