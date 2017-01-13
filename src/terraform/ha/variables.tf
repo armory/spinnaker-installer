@@ -141,7 +141,7 @@ variable "instance_type" {
   default = "m3.2xlarge"
 }
 
-variable "images" {
+variable "armoryspinnaker_ami" {
   type = "map"
 
   default = {
