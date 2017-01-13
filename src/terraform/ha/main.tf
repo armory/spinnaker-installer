@@ -55,7 +55,7 @@ module "asg-polling" {
   clouddriver_profiles = "armory,local"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
-  local_redis = false
+  local_redis = "false"
   redis_primary_endpoint_address = "${var.use_existing_cache ? var.existing_cache_endpoint : module.redis.primary_endpoint_address}"
   s3_bucket = "${var.s3_bucket}"
   s3_prefix = "${var.s3_prefix}"
@@ -83,7 +83,7 @@ module "asg-nonpolling" {
   clouddriver_profiles = "armory,local,nonpolling"
   internal_dns_name = "${aws_elb.armoryspinnaker_internal.dns_name}"
   external_dns_name = "${module.external-elb.dns_name}" 
-  local_redis = false
+  local_redis = "false"
   redis_primary_endpoint_address = "${var.use_existing_cache ? var.existing_cache_endpoint : module.redis.primary_endpoint_address}"
   s3_bucket = "${var.s3_bucket}"
   s3_prefix = "${var.s3_prefix}"
