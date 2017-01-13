@@ -81,7 +81,7 @@ EOF
 
 resource "aws_launch_configuration" "lc" {
   # TODO: name
-  image_id              = "ami-b2dd60d2" #"${data.aws_ami.armory_spinnaker_ami.id}"
+  image_id              = "ami-f5da6795" #"${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile  = "${var.instance_profile}"
