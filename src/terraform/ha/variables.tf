@@ -140,3 +140,11 @@ variable "instance_type" {
   description = "The instance type in which you want Spinnaker to live."
   default = "m3.2xlarge"
 }
+
+variable "images" {
+  type = "map"
+
+  default = {
+    us-west-2 = "ami-b18d30d1"
+  }
+}
