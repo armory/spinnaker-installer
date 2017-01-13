@@ -64,12 +64,12 @@ variable "armoryspinnaker_s3_access_policy_name" {
 
 variable "armoryspinnaker_internal_elb_name" {
   description = "The name of the ELB that spinnaker subservices will use"
-  default = "armoryspinnaker-prod-internal"
+  default = "armoryspinnaker-ha-internal"
 }
 
 variable "armoryspinnaker_external_elb_name" {
   description = "The name of the ELB that users will use"
-  default = "armoryspinnaker-prod-external"
+  default = "armoryspinnaker-ha-external"
 }
 
 #

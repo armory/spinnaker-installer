@@ -27,8 +27,8 @@ export TF_VAR_armoryspinnaker_cache_name=armoryspinnaker${suffix}
 export TF_VAR_armoryspinnaker_cache_subnet_name=armoryspinnaker-cache-subnet${suffix}
 export TF_VAR_armoryspinnaker_external_sg_name=armoryspinnaker-external${suffix}
 export TF_VAR_armoryspinnaker_default_sg_name=armoryspinnaker-default${suffix}
-export TF_VAR_armoryspinnaker_asg=armoryspinnaker-ha000${suffix}
-export TF_VAR_armoryspinnaker_asg_polling=armoryspinnaker-ha-polling-000${suffix}
+export TF_VAR_armoryspinnaker_asg=armoryspinnaker-ha-v000${suffix}
+export TF_VAR_armoryspinnaker_asg_polling=armoryspinnaker-ha-polling-v000${suffix}
 
 #export TF_VAR_use_existing_cache=true
 #export TF_VAR_existing_cache_endpoint=spinnaker-cache.bfktrz.ng.0001.usw2.cache.amazonaws.com:6379

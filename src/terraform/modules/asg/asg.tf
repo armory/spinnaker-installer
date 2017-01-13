@@ -33,6 +33,11 @@ DEFAULT_DNS_NAME=$${internal_dns_name}
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=$${redis_host}
 CLOUDDRIVER_OPTS="-Dspring.profiles.active=$${clouddriver_profiles}"
+GATE_OPTS="-Dspring.profiles.active=armory,local"
+IGOR_OPTS="-Dspring.profiles.active=armory,local"
+ECHO_OPTS="-Dspring.profiles.active=armory,local"
+FRONT50_OPTS="-Dspring.profiles.active=armory,local"
+ROSCO_OPTS="-Dspring.profiles.active=armory,local"
 EOT
 
 service armory-spinnaker restart
@@ -54,29 +59,29 @@ EOF
 }
 
 
-variable "release_tag" {
-  default = "Release"
-}
+#variable "release_tag" {
+#  default = "Release"
+#}
 
-variable "release_tag_value" {
-  default = "*"
-}
+#variable "release_tag_value" {
+#  default = "*"
+#}
 
-
-data "aws_ami" "armory_spinnaker_ami" {
-  filter {
-    name = "state"
-    values = ["available"]
-  }
-  filter {
-    name = "name"
-    values = ["armory-spinnaker*"]
-  }
-  most_recent = true
-}
+#data "aws_ami" "armory_spinnaker_ami" {
+#  filter {
+#    name = "state"
+#    values = ["available"]
+#  }
+#  filter {
+#    name = "name"
+#    values = ["armory-spinnaker*"]
+#  }
+#  most_recent = true
+#}
 
 resource "aws_launch_configuration" "lc" {
-  image_id              = "ami-34e75a54" #"${data.aws_ami.armory_spinnaker_ami.id}"
+  # TODO: name
+  image_id              = "ami-b2dd60d2" #"${data.aws_ami.armory_spinnaker_ami.id}"
   instance_type         = "${var.instance_type}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile  = "${var.instance_profile}"
@@ -95,8 +100,8 @@ resource "aws_autoscaling_group" "armory-spinnaker-asg" {
   min_size                  = "${var.asg_size_min}"
   desired_capacity          = "${var.asg_size_desired}"
   force_delete              = true
-  health_check_grace_period = 300
-  health_check_type         = "ELB"
+  #health_check_grace_period = 300
+  #health_check_type         = "ELB"
   launch_configuration      = "${aws_launch_configuration.lc.name}"
   load_balancers            = ["${split(",", var.load_balancers)}"]
   vpc_zone_identifier       = ["${split(",", var.subnet_ids)}"]
