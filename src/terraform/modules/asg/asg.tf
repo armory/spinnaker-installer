@@ -33,7 +33,7 @@ SERVER_ADDRESS=0.0.0.0
 DEFAULT_DNS_NAME=$${internal_dns_name}
 SPRING_CONFIG_LOCATION=/opt/spinnaker/config/
 REDIS_HOST=$${redis_host}
-SPRING_PROFILES_ACTIVE="armory,local"
+SPRING_PROFILES_ACTIVE=armory,local
 CLOUDDRIVER_OPTS="-Dspring.profiles.active=$${clouddriver_profiles}"
 EOT
 
