@@ -36,7 +36,7 @@ module "redis" {
 
 module "asg-polling" {
   source = "../modules/asg"
-  ami_id = "loopup(var.armoryspinnaker_ami, var.aws_region)"
+  ami_id = "${lookup(var.armoryspinnaker_ami, var.aws_region)}"
   asg_name = "${var.armoryspinnaker_asg_polling}"
   asg_size_min = 1
   asg_size_max = 1
@@ -65,7 +65,7 @@ module "asg-polling" {
 
 module "asg-nonpolling" {
   source = "../modules/asg"
-  ami_id = "loopup(var.armoryspinnaker_ami, var.aws_region)"
+  ami_id = "${lookup(var.armoryspinnaker_ami, var.aws_region)}"
   asg_name = "${var.armoryspinnaker_asg}"
   asg_size_min = 2
   asg_size_max = 2
