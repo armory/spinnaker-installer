@@ -145,6 +145,6 @@ variable "armoryspinnaker_ami" {
   type = "map"
 
   default = {
-    us-west-2 = "ami-b18d30d1"
+    us-west-2 = "ami-1d77ca7d"
   }
 }
