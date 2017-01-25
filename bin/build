@@ -12,4 +12,6 @@ ARTIFACT_NAME="install-${GIT_HASH}.sh"
 rm -dfr ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}
 
-cp `pwd`/src/install.sh `pwd`/${BUILD_DIR}/${ARTIFACT_NAME}
+# For now all we are doing is copying, but this will get more complicated soon.
+cp `pwd`/src/install.sh ${BUILD_DIR}/${ARTIFACT_NAME}
+echo "Created artifact: ${BUILD_DIR}/${ARTIFACT_NAME}"
