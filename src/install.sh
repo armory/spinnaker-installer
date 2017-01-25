@@ -13,8 +13,7 @@ cat << EOF
 EOF
 
 set -o pipefail
-
-SOURCE_URL="http://get.armory.io/${PREFIX}"
+SOURCE_URL="http://get.armory.io/install/c1391fe"
 INSTALLER_PACKAGE_NAME="armory-spinnaker-installer.tar.gz"
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}

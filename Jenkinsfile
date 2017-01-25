@@ -1,19 +1,15 @@
-
 node {
     checkout scm
-    stage("Do Nothing") {
-        
-    }
-    
-    /*
-    stage("Build Script") {
+    stage("Build Artifact") {
         sh("arm build")
-        sh("arm integration")
+        archiveArtifacts artifacts: 'build/*', fingerprint: true
     }
-    */
+    stage("Publish Artifact") {
+        sh("arm push")
+    }
     /*
-    stage('Archive Artifacts / Test Results') {
-           archiveArtifacts artifacts: 'build/*', fingerprint: true
+    stage("Promote Artifact") {
+        sh("arm publish")
     }
     */
 }
