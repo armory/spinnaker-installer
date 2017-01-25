@@ -4,11 +4,12 @@
 # WARNING: This script should be executed via the arm tool.
 
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")"/..
+
+BUILD_DIR="$(pwd)"/build
+ARTIFACT_NAME="install-${GIT_HASH}.sh"
 
 rm -dfr ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}
 
-ARTIFACT_NAME="install-${GIT_HASH}.sh"
-
-cp `pwd`/src/install.sh `pwd`/build/${ARTIFACT_NAME}
+cp `pwd`/src/install.sh `pwd`/${BUILD_DIR}/${ARTIFACT_NAME}
