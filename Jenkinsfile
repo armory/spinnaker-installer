@@ -7,7 +7,9 @@ node {
     stage("Publish Artifact") {
         sh("arm push")
     }
+    /*
     stage("Promote Artifact") {
         sh("arm publish")
     }
+    */
 }
