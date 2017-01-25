@@ -1,37 +1,14 @@
 #!/bin/bash
+
+# This script creates the install script artifact.
+# WARNING: This script should be executed via the arm tool.
+
 set -e
-
-BUCKET="s3://armory-web"
-INSTALLER_PACKAGE_NAME=armory-spinnaker-installer.tar.gz
-INSTALLER_PACKAGE_PATH=${BASE_DIR}/build/${INSTALLER_PACKAGE_NAME}
-BUILD_DIR=${BASE_DIR}/build
-PREFIX="stage/${BRANCH_NAME}"
-if [[ "${BRANCH_NAME}" == "master" ]]; then
-    PREFIX="install/${GIT_HASH}"
-fi
-
-docker build -t "${DOCKER_IMAGE}" -f etc/Dockerfile .
-
-cd "$(git rev-parse --show-toplevel)"
+cd "$(dirname "$0")"
 
 rm -dfr ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}
 
-sed -e "s|\${PREFIX}|${PREFIX}|g" src/install.sh > build/install.sh
+ARTIFACT_NAME="install-${GIT_HASH}.sh"
 
-pushd ./src/terraform
-tar -cvzf   \
-    ${INSTALLER_PACKAGE_PATH} \
-    --exclude="./vpc" \
-    --exclude="*tfstate*" \
-     ./
-popd
-
-echo "Uploading to get.armory.io/ for $BRANCH_NAME"
-aws s3 cp ${INSTALLER_PACKAGE_PATH} ${BUCKET}/${PREFIX}/${INSTALLER_PACKAGE_NAME}
-aws s3 cp ${BUILD_DIR}/install.sh ${BUCKET}/${PREFIX}/install.sh
-
-# Update the root url http://get.armory.io to download the latest version
-if [[ "${BRANCH_NAME}" == "master" ]]; then
-  aws s3 cp ${BUILD_DIR}/install.sh ${BUCKET}/install.sh
-fi
+cp `pwd`/src/install.sh `pwd`/build/${ARTIFACT_NAME}

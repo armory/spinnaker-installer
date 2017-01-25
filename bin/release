@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# This script promotes what was previously pushed to the current release.
+# It changes the link of http://get.armory.io to this version.
+# WARNING: Only run this script with the 'arm' tool.
+
+set -e
+
+# Update the root url http://get.armory.io to download the latest version
+if [[ "${BRANCH_NAME}" == "master" ]]; then
+    SOURCE_BUCKET="s3://armory-web"
+    SOURCE_PREFIX="install/release"
+    ARTIFACT_NAME="install-${GIT_HASH}.sh"
+    S3_SOURCE="${SOURCE_BUCKET}/${SOURCE_PREFIX}/${ARTIFACT_NAME}"
+  
+    DEST_BUCKET="s3://armory-web"
+
+    aws s3 cp ${S3_SOURCE} ${DEST_BUCKET}/install.sh
+fi
