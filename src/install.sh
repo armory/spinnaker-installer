@@ -127,7 +127,7 @@ function prompt_user() {
   if [[ "${use_env_file}" == 'n' ]]; then
     get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]:" TF_VAR_deploy_configuration
     get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE
-    get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]: " TF_VAR_s3_bucket
+    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, [e.g. examplebucket]: " TF_VAR_s3_bucket
     get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
     get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
@@ -180,7 +180,8 @@ function create_spinnaker_stack() {
 function wait_for_spinnaker() {
   echo "All your resources have been created."
   echo "Log into your AWS console and find your external ELB URL"
-  echo -e "If you run into any issues, you can with us at ${BLUE}http://go.armory.io/chat${NC}"
+  echo "Need help, advice, or just want to say hello during the installation?"
+  echo "You can chat with our team at ${BLUE}http://go.armory.io/chat${NC}"
   exit 0
 }
 
