@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 cat << EOF
+
     :::     :::::::::  ::::    ::::   ::::::::  :::::::::  :::   :::
   :+: :+:   :+:    :+: +:+:+: :+:+:+ :+:    :+: :+:    :+: :+:   :+:
  +:+   +:+  +:+    +:+ +:+ +:+:+ +:+ +:+    +:+ +:+    +:+  +:+ +:+
@@ -13,6 +14,8 @@ cat << EOF
 EOF
 
 set -o pipefail
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 SOURCE_URL="http://get.armory.io/install/release"
 INSTALLER_PACKAGE_NAME="spinnaker-terraform-3040ee3.tar.gz"
 TMP_PATH=${HOME}/tmp/armory
@@ -39,12 +42,15 @@ function describe_installer() {
     - IAM Policy Spinnaker assume role permissions
     - IAM Policy Spinnaker ECR read access
 
+
+If you run into any issues during the installation, you can with us at http://go.armory.io/chat
 Press 'Enter' key to continue. Ctrl+c to quit.
 EOF
   read
 }
 
 function error() {
+  echo >&2 "Oops that didn't work.  Visit http://go.armory.io/chat to chat with us and we can help"
   echo >&2 "ERROR: $1"
   echo >&2 "Aborting."
   exit 1;
@@ -113,7 +119,7 @@ function set_aws_vars() {
 function prompt_user() {
   if [ -f ${MP_FILE} ]; then
     echo "Found an existing env file: ${MP_FILE}."
-    echo -n "Would you like to continue to use these responses from your last run? [y/n]:"
+    echo -n "Would you like to continue to use the responses from your last run? [y/n]:"
     read use_env_file
   fi
   if [[ "${use_env_file}" == 'n' ]]; then
@@ -130,6 +136,7 @@ function prompt_user() {
     create_tmp_space
     set_aws_vars
     save_user_responses
+    download_tf_templates
   fi
 }
 
@@ -170,7 +177,12 @@ function create_spinnaker_stack() {
 }
 
 function wait_for_spinnaker() {
-  local terraform_output=$(run_terraform "output" | tr -d '\n\r')
+  echo "All your resources have been created."
+  echo "Log into your AWS console and find your external ELB URL"
+  echo -e "If you run into any issues, you can with us at ${BLUE}http://go.armory.io/chat${NC}"
+  exit 0
+  ## The code below will need changes in the TF files to output the correct ELB
+  local terraform_output=$(run_terraform "output" "./${TF_VAR_deploy_configuration}" | tr -d '\n\r')
   local spinnaker_host=$(expr "${terraform_output}" : ".* spinnaker_url = \(.*\)}")
   echo "Waiting for ${spinnaker_host} to become available."
   spinnaker_url="http://${spinnaker_host}"
@@ -201,7 +213,6 @@ function main() {
   describe_installer
   look_for_docker
   prompt_user
-  download_tf_templates
   create_spinnaker_stack
   wait_for_spinnaker
 }
