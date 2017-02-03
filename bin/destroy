@@ -1,0 +1,79 @@
+#!/bin/bash
+set -e
+
+function destroy_instance_profiles() {
+  role_name=$1
+  profiles=$(aws iam list-instance-profiles-for-role \
+      --query InstanceProfiles[*].{Name:InstanceProfileName} \
+      --role-name=$role_name \
+      --profile ${PROFILE} \
+      --output text)
+
+  for profile in ${profiles}; do
+    aws iam remove-role-from-instance-profile --instance-profile-name ${profile} \
+      --role-name $role_name --profile ${PROFILE}
+    aws iam delete-instance-profile --instance-profile-name ${profile} --profile ${PROFILE}
+  done
+}
+
+function detach_role_policies() {
+    role_name=$1
+    policies=$(aws iam list-attached-role-policies \
+      --query 'AttachedPolicies[*].{P:PolicyArn}' --output text \
+      --output text --role-name=$role_name --profile ${PROFILE})
+
+    for policy_arn in $(echo ${policies}); do
+      echo "detaching policy for: ${role_name} with arn: ${policy_arn}"
+      aws iam detach-role-policy --role-name ${role_name} --policy-arn ${policy_arn} --profile ${PROFILE}
+    done
+}
+
+function destroy_policies() {
+    policies=$(aws iam list-policies \
+      --query 'Policies[?starts_with(PolicyName, `Spinnaker`)==`true`].Arn' \
+      --profile ${PROFILE} --output text)
+
+    for policy_arn in ${policies}; do
+      echo "Deleting Policy ${policy_arn}"
+      aws iam delete-policy --policy-arn ${policy_arn} --profile ${PROFILE}
+    done
+}
+
+function destroy_dangling_instance_profiles() {
+  instance_profiles=$(aws iam list-instance-profiles \
+    --query 'InstanceProfiles[?starts_with(InstanceProfileName, `Spin`)==`true`].InstanceProfileName' \
+    --output text \
+    --profile ${PROFILE})
+  for profile_name in ${instance_profiles}; do
+    echo "Deleting dangling instance profile ${profile_name}"
+    aws iam delete-instance-profile --instance-profile-name ${profile_name} --profile ${PROFILE}
+  done
+}
+
+function destroy_roles() {
+    list_roles=$(aws iam list-roles --query \
+      'Roles[?starts_with(RoleName, `Spinnaker`)==`true`].RoleName' \
+      --profile ${PROFILE} \
+      --output text)
+    echo ${list_roles}
+    for role in ${list_roles}; do
+      echo "Deleting role: ${role}"
+      detach_role_policies ${role}
+      destroy_instance_profiles ${role}
+      aws iam delete-role --role-name ${role} --profile ${PROFILE}
+    done
+}
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: destory <aws-shared-credentials-profile>" >&2
+  exit 0
+fi
+
+PROFILE=$1
+if [[ "$PROFILE" == "default" ]]; then
+  echo "you can't run this program with the 'default' profile"
+  exit 1
+fi
+destroy_roles
+destroy_policies
+destroy_dangling_instance_profiles
