@@ -120,6 +120,7 @@ function set_aws_vars() {
 }
 
 function prompt_user() {
+  use_env_file='n'
   if [ -f ${MP_FILE} ]; then
     echo "Found an existing env file: ${MP_FILE}."
     echo -n "Would you like to continue to use the responses from your last run? [y/n]:"
