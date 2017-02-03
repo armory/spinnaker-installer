@@ -46,6 +46,7 @@ function describe_installer() {
 Need help, advice, or just want to say hello during the installation?
 Chat with our eng. team at http://go.Armory.io/chat.
 One customer called us “ridiculously responsive.”  Hopefully we can be the same for you!
+
 Press 'Enter' key to continue. Ctrl+c to quit.
 EOF
   read
