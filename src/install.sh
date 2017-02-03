@@ -13,17 +13,17 @@ cat << EOF
 EOF
 
 set -o pipefail
-SOURCE_URL="http://get.armory.io/install/c1391fe"
-INSTALLER_PACKAGE_NAME="armory-spinnaker-installer.tar.gz"
+SOURCE_URL="http://get.armory.io/install/release"
+INSTALLER_PACKAGE_NAME="spinnaker-terraform-3040ee3.tar.gz"
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
-
+MP_FILE=${TMP_PATH}/armory-env.tmp
 function describe_installer() {
   cat <<EOF
   This installer will launch Spinnaker inside your AWS account.
 
   The following AWS resources are required:
-    - AWS shared credentials file
+    - AWS Shared Credentials File
     - Existing target VPC & Subnet
     - S3 Bucket to place terraform state & Spinnaker backend store
 
@@ -55,7 +55,8 @@ function mac_warning() {
   if [[ "$?" -eq "0" ]]; then
     echo "WARNING: You're on a version of Mac OSX.  Your Docker VM might be"
     echo "out of sync with your system clock causing AWS signature issues. "
-    echo "If you experience an error please retry restarting your docker daemon"
+    echo "If you experience an error please retry restarting your docker daemon "
+    echo
   fi
 }
 
@@ -67,10 +68,10 @@ function look_for_docker() {
 
 function run_terraform() {
   docker run -i -t \
-    --env-file=$mpfile \
+    --env-file=$MP_FILE \
     --workdir=/data \
     -v ${TMP_PATH}:/data \
-    hashicorp/terraform:light \
+    hashicorp/terraform:0.8.4 \
     $@
 }
 
@@ -94,26 +95,51 @@ function get_var() {
   fi
 }
 
+function set_aws_vars() {
+  role_arn=$(aws configure get ${AWS_PROFILE}.role_arn)
+  if [[ "${role_arn}" == "" ]]; then
+    export AWS_ACCESS_KEY_ID=$(aws configure get ${AWS_PROFILE}.aws_access_key_id)
+    export AWS_SECRET_ACCESS_KEY=$(aws configure get ${AWS_PROFILE}.aws_secret_access_key)
+  else
+    #for more info on setting up your credentials file go here: http://docs.aws.amazon.com/cli/latest/topic/config-vars.html#using-aws-iam-roles
+    source_profile=$(aws configure get ${AWS_PROFILE}.source_profile)
+    temp_session_data=$(aws sts assume-role --role-arn ${role_arn} --role-session-name armory-spinnaker --profile ${source_profile} --output text)
+    export AWS_ACCESS_KEY_ID=$(echo ${temp_session_data} | awk '{print $5}')
+    export AWS_SECRET_ACCESS_KEY=$(echo ${temp_session_data} | awk '{print $7}')
+    export AWS_SESSION_TOKEN=$(echo ${temp_session_data} | awk '{print $8}')
+  fi
+}
+
 function prompt_user() {
-  get_var "Enter AWS Access Key Id [e.g. AKIAIOUF8KK9KELEQSFA]: " AWS_ACCESS_KEY_ID
-  get_var "Enter AWS Secret Access Key [e.g. klBmdoR7M+ULWL3OB828Vb7BbcwQdF+4ZZOlHGk6]: " AWS_SECRET_ACCESS_KEY
-  get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]: " TF_VAR_armory_s3_bucket
-  get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_front50_path_prefix
-  get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
-  get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
-  get_var "Enter a Subnet ID. Spinnaker will be installed inside this Subnet. [e.g. subnet-8f5d43d6]: " TF_VAR_armory_subnet_id
-  get_var "Enter one or more AWS availablity zones. Spinnaker will be replicated within those zones. [e.g. us-west-2a,us-west2b]: " TF_VAR_availability_zones
-  get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name
+  if [ -f ${MP_FILE} ]; then
+    echo "Found an existing env file: ${MP_FILE}."
+    echo -n "Would you like to continue to use these responses from your last run? [y/n]:"
+    read use_env_file
+  fi
+  if [[ "${use_env_file}" == 'n' ]]; then
+    get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]:" TF_VAR_deploy_configuration
+    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE
+    get_var "Enter S3 bucket to use for persisting Spinnaker's data[e.g. examplebucket]: " TF_VAR_s3_bucket
+    get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_front50_path_prefix
+    get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
+    get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
+    get_var "Enter a Subnet ID. Spinnaker will be installed inside this Subnet. [e.g. subnet-8f5d43d6]: " TF_VAR_armoryspinnaker_subnet_ids
+    get_var "Enter one or more AWS availablity zones. Spinnaker will be replicated within those zones. [e.g. us-west-2a,us-west2b]: " TF_VAR_availability_zones
+    get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name
+
+    create_tmp_space
+    set_aws_vars
+    save_user_responses
+  fi
 }
 
 function save_user_responses() {
-  mpfile=${TMP_PATH}/armory-env.tmp
-  echo "Saving to ${mpfile}..."
+  echo "Saving to ${MP_FILE}..."
   # we have to do this to make sure to not put this bash into
   # environment file
   unset BASH_EXECUTION_STRING
   local_env=$(set -o posix ; set | grep -E "TF_VAR|AWS")
-  echo "$local_env" >> $mpfile
+  echo "$local_env" >> $MP_FILE
 }
 
 function download_tf_templates() {
@@ -127,16 +153,18 @@ function clean_terraform() {
 }
 
 function create_spinnaker_stack() {
+  source ${MP_FILE}
   run_terraform "remote config -backend=S3 \
-    -backend-config=bucket=${TF_VAR_armory_s3_bucket} \
-    -backend-config=key=${TF_VAR_armory_s3_path_prefix}/terraform/terraform.tfstate \
+    -backend-config=bucket=${TF_VAR_s3_bucket} \
+    -backend-config=key=${TF_VAR_s3_front50_path_prefix}/terraform/terraform.tfstate \
     -backend-config=region=${TF_VAR_aws_region} \
     -pull=true"
 
-  run_terraform "apply" "./managing-acct" || { 
-    echo "Terraform error. Cleaning up partial infrastruction." 
-    clean_terraform "./managing-acct"
-    error "Terraform error." 
+  run_terraform "get" "./${TF_VAR_deploy_configuration}"
+  run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
+    echo "Terraform error. Cleaning up partial infrastruction."
+    clean_terraform "./${TF_VAR_deploy_configuration}"
+    error "Terraform error."
   }
   run_terraform "remote push"
 }
@@ -161,11 +189,11 @@ function wait_for_spinnaker() {
     sleep 1
   done
   echo ""
-  echo "Couldn't connect to ${spinnaker_url}:9000. It is possible that partial" 
+  echo "Couldn't connect to ${spinnaker_url}:9000. It is possible that partial"
   echo "installation has occurred. You probably have AWS resources created "
   echo "through this process that need to be cleaned up. You can find the "
   echo ".tfstate file in the S3 bucket you specified: "
-  echo "    s3://${TF_VAR_armory_s3_bucket}/${TF_VAR_s3_front50_path_prefix}"
+  echo "    s3://${TF_VAR_s3_bucket}/${TF_VAR_s3_front50_path_prefix}"
   exit 1
 }
 
@@ -173,8 +201,6 @@ function main() {
   describe_installer
   look_for_docker
   prompt_user
-  create_tmp_space
-  save_user_responses
   download_tf_templates
   create_spinnaker_stack
   wait_for_spinnaker
