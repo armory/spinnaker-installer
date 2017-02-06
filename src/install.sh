@@ -117,6 +117,7 @@ function set_aws_vars() {
     export AWS_SECRET_ACCESS_KEY=$(echo ${temp_session_data} | awk '{print $7}')
     export AWS_SESSION_TOKEN=$(echo ${temp_session_data} | awk '{print $8}')
   fi
+  export AWS_REGION=${TF_VAR_aws_region}
 }
 
 function prompt_user() {
@@ -135,7 +136,7 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name
-
+    
     create_tmp_space
     set_aws_vars
     save_user_responses
