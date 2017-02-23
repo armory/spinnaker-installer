@@ -16,7 +16,7 @@ EOF
 set -o pipefail
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
-SOURCE_URL="http://get.armory.io/install/release"
+SOURCE_URL="spinnaker-terraform-13d70f9.tar.gz"
 INSTALLER_PACKAGE_NAME="spinnaker-terraform-321522d.tar.gz"
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
@@ -136,7 +136,7 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name
-    
+
     create_tmp_space
     set_aws_vars
     save_user_responses
