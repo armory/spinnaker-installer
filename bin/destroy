@@ -27,6 +27,25 @@ function detach_role_policies() {
       aws iam detach-role-policy --role-name ${role_name} --policy-arn ${policy_arn} --profile ${PROFILE}
     done
 }
+function destroy_instances() {
+    echo "Destroying Instances"
+    instances=$(aws ec2 describe-instances \
+        --filters \
+            "Name=instance-state-name,Values=running" \
+            "Name=tag:Name,Values=armoryspinnaker" \
+        --query 'Reservations[*].Instances[*].{p:InstanceId}' \
+        --output text \
+        --profile ${PROFILE})
+
+    for instance_id in ${instances}; do
+      echo "Terminating Instance: ${instance_id}"
+      aws ec2 terminate-instances \
+        --instance-ids ${instance_id} \
+        --profile ${PROFILE}
+      echo "Sleeping for 5 seconds to wait for instances to begin terminating"
+      sleep 5
+    done
+}
 
 function destroy_policies() {
     policies=$(aws iam list-policies \
@@ -71,14 +90,13 @@ function destroy_elbs() {
     --profile ${PROFILE} \
     --output text)
   for elb in ${elbs}; do
-    set -x
     echo "Destroying: ${elb}"
     aws elb delete-load-balancer --load-balancer-name ${elb} --profile ${PROFILE}
   done
 }
 
 function destroy_cache() {
-  echo "Destroying cache"
+  echo "Destroying Cache"
   caches=$(aws elasticache describe-replication-groups \
       --query 'ReplicationGroups[?starts_with(ReplicationGroupId, `spinnaker`)==`true`].ReplicationGroupId' \
       --output text \
@@ -91,7 +109,7 @@ function destroy_cache() {
 }
 
 function destroy_security_groups() {
-    echo "destroying security groups"
+    echo "Destroying security groups"
     security_groups=$(aws ec2  describe-security-groups \
         --query 'SecurityGroups[?starts_with(GroupName, `armory`)==`true`].GroupId' \
         --profile ${PROFILE} \
@@ -112,9 +130,11 @@ if [[ "$PROFILE" == "default" ]]; then
   echo "you can't run this program with the 'default' profile"
   exit 1
 fi
+
 destroy_roles
 destroy_policies
 destroy_dangling_instance_profiles
 destroy_elbs
 destroy_cache
+destroy_instances
 destroy_security_groups
