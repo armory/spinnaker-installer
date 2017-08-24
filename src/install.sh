@@ -17,7 +17,7 @@ set -o pipefail
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 SOURCE_URL="http://get.armory.io/install/release"
-INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.6.35.tar.gz
+INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.8.81.tar.gz
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 MP_FILE=${TMP_PATH}/armory-env.tmp
