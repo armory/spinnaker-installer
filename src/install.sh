@@ -118,7 +118,7 @@ function validate_vpc() {
 }
 
 function validate_subnet() {
-  local subnet=${1}
+  local subnets=$(echo $1 | tr ',' ' ')
   aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-subnets --filters "Name=vpc-id,Values=${TF_VAR_vpc_id}" --subnet-ids ${subnet} &> /dev/null
   local result=$?
   if [ "$result" == "0" ]; then
