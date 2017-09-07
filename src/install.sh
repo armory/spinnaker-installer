@@ -90,7 +90,7 @@ function create_tmp_space() {
 }
 
 function validate_s3_bucket() {
-  aws --profile ${AWS_PROFILE} s3 ls s3://${1} 1>&2 2>>/dev/null
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls s3://${1} 1>&2 2>>/dev/null
   local result=$?
   if [ "$result" == "0" ]; then
     echo "S3 Bucket is valid."
@@ -102,7 +102,7 @@ function validate_s3_bucket() {
 
 function validate_vpc() {
   local vpc=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc}
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} 1>&2 2>>/dev/null
   local result=$?
   if [ "$result" == "0" ]; then
     echo "VPC is valid."
@@ -114,7 +114,7 @@ function validate_vpc() {
 
 function validate_subnet() {
   local subnet=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-subnets --filters "Name=vpc-id,Values=${TF_VAR_vpc_id}" --subnet-ids ${subnet}
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-subnets --filters "Name=vpc-id,Values=${TF_VAR_vpc_id}" --subnet-ids ${subnet} 1>&2 2>>/dev/null
   local result=$?
   if [ "$result" == "0" ]; then
     echo "Subnet is valid."
@@ -126,7 +126,7 @@ function validate_subnet() {
 
 function validate_keypair() {
   local keypair=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-key-pairs --key-names ${keypair}
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-key-pairs --key-names ${keypair} 1>&2 2>>/dev/null
   local result=$?
   if [ "$result" == "0" ]; then
     echo "Keypair is valid."
@@ -180,9 +180,9 @@ function prompt_user() {
   if [[ "${use_env_file}" == 'n' ]]; then
     get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]:" TF_VAR_deploy_configuration
     get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE
-    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket
-    get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
     get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
+    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket
+    get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name validate_keypair
