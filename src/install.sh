@@ -90,22 +90,27 @@ function create_tmp_space() {
 }
 
 function validate_s3_bucket() {
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls s3://${1} 1>&2 2>>/dev/null
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls s3://${1} &> /dev/null
   local result=$?
   if [ "$result" == "0" ]; then
-    echo "S3 Bucket is valid."
+    echo "Valid S3 Bucket selected."
   else
     echo "Could not list bucket '${1}' using profile '${AWS_PROFILE}'. Are you sure you have permissions?"
   fi
   return $result
 }
 
+function list_s3_buckets() {
+  echo "Available S3 buckets in '${TF_VAR_aws_region}' with '${AWS_PROFILE}' profile:"
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls
+}
+
 function validate_vpc() {
   local vpc=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} 1>&2 2>>/dev/null
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} &> /dev/null
   local result=$?
   if [ "$result" == "0" ]; then
-    echo "VPC is valid."
+    echo "Valid VPC selected."
   else
     echo "Could not find '${vpc}' in ${TF_VAR_aws_region} using profile '${AWS_PROFILE}'. Please check that it exists and you have permission."
   fi
@@ -114,10 +119,10 @@ function validate_vpc() {
 
 function validate_subnet() {
   local subnet=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-subnets --filters "Name=vpc-id,Values=${TF_VAR_vpc_id}" --subnet-ids ${subnet} 1>&2 2>>/dev/null
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-subnets --filters "Name=vpc-id,Values=${TF_VAR_vpc_id}" --subnet-ids ${subnet} &> /dev/null
   local result=$?
   if [ "$result" == "0" ]; then
-    echo "Subnet is valid."
+    echo "Valid Subnet selected."
   else
     echo "Could not find subnet '${subnet}' in ${TF_VAR_vpc_id} using profile 'AWS_PROFILE' in ${TF_VAR_aws_region}. Please check that it exists and you have permission."
   fi
@@ -126,21 +131,55 @@ function validate_subnet() {
 
 function validate_keypair() {
   local keypair=${1}
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-key-pairs --key-names ${keypair} 1>&2 2>>/dev/null
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-key-pairs --key-names ${keypair} &> /dev/null
   local result=$?
   if [ "$result" == "0" ]; then
-    echo "Keypair is valid."
+    echo "Valid key-pair selected."
   else
     echo "Could not find '${keypair}' in ${TF_VAR_aws_region} using profile '${AWS_PROFILE}'. Please check that it exists and you have permission."
   fi
   return $result
 }
 
+function validate_mode() {
+  local mode=${1}
+  if [ "${mode}" == "ha" ] || [ "${mode}" == "stand-alone" ] ; then
+    echo "Valid mode selected."
+    return 0
+  fi
+  echo "Invalid mode selected."
+  return 1
+}
+
+function validate_profile() {
+  local profile=${1}
+  aws configure get ${profile}.aws_access_key_id &> /dev/null
+  local result=$?
+  if [ "$result" == "0" ]; then
+    echo "Valid Profile selected."
+  else
+    echo "Could not find access key id for profile '${profile}'. Are you sure there is a profile with that name in your AWS credentials file?"
+  fi
+  return $result
+}
+
+function validate_region() {
+  local region=${1}
+  if [ "${region}" == "us-west-2" ] || [ "${region}" == "us-west-1" ] || [ "${region}" == "us-east-1" ] ; then
+    echo "Valid region selected."
+    return 0
+  fi
+  echo "Armory Spinnaker can only be installed in us-west-1, us-west-2 or us-east-1."
+  return 1
+}
+
 function get_var() {
   local text=$1
   local var_name="${2}"
   local val_func=${3}
+  local val_list=${4}
   if [ -z ${!var_name} ]; then
+    [ ! -z "$val_list" ] && $val_list
     echo -n "${text}"
     read value
     if [ -z "${value}" ]; then
@@ -178,10 +217,10 @@ function prompt_user() {
     read use_env_file
   fi
   if [[ "${use_env_file}" == 'n' ]]; then
-    get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]:" TF_VAR_deploy_configuration
-    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE
-    get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region
-    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket
+    get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]: " TF_VAR_deploy_configuration validate_mode
+    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile 
+    get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region validate_region
+    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket list_s3_buckets
     get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
