@@ -90,18 +90,34 @@ function create_tmp_space() {
 }
 
 function validate_s3_bucket() {
-  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls s3://${1} &> /dev/null
+  local bucket=${1}
+  aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls s3://${bucket} &> /dev/null
   local result=$?
-  if [ "$result" == "0" ]; then
-    echo "Valid S3 Bucket selected."
-  else
+  if [ "$result" != "0" ]; then
     echo "Could not list bucket '${1}' using profile '${AWS_PROFILE}'. Are you sure you have permissions?"
+    return $result
   fi
-  return $result
+
+  local resp=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3api get-bucket-location --bucket ${bucket})
+  # This is a special case for us-east-1. The AWS API returns null for legacy reasons.
+  if [ "${TF_VAR_aws_region}" == "us-east-1" ]; then
+    echo $resp | grep null &> /dev/null || {
+      echo "Bucket ${bucket} is not in ${TF_VAR_aws_region}"
+      return 1
+    }
+  else
+    echo $resp | grep ${TF_VAR_aws_region} &> /dev/null || {
+      echo "Bucket ${bucket} is not in ${TF_VAR_aws_region}"
+      return 1
+    }
+  fi
+
+  echo "Valid S3 Bucket selected."
+  return 0
 }
 
-function list_s3_buckets() {
-  echo "Available S3 buckets in '${TF_VAR_aws_region}' with '${AWS_PROFILE}' profile:"
+function list_s3_bucket() {
+  echo "Available S3 buckets (all regions):"
   aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3 ls
 }
 
@@ -220,7 +236,7 @@ function prompt_user() {
     get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]: " TF_VAR_deploy_configuration validate_mode
     get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile 
     get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region validate_region
-    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket list_s3_buckets
+    get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket list_s3_bucket
     get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
