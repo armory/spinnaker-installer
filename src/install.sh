@@ -185,8 +185,8 @@ function validate_region() {
     echo "Valid region selected."
     return 0
   fi
-  echo "Armory Spinnaker is only available in us-west-1, us-west-2, us-east-1, eu-central-1, or eu-west-1."
-  echo "Please send us an email at hello@armory.io to request your perfered region."
+  echo "Armory Spinnaker is only available in us-west-1, us-west-2, us-east-1, eu-central-1, or eu-west-1 at the moment."
+  echo "Visit http://go.armory.io/chat to let us know where else you'd like Armory Spinnaker."
   return 1
 }
 
