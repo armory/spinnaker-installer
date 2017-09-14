@@ -181,11 +181,12 @@ function validate_profile() {
 
 function validate_region() {
   local region=${1}
-  if [ "${region}" == "us-west-2" ] || [ "${region}" == "us-west-1" ] || [ "${region}" == "us-east-1" ] ; then
+  if [ "${region}" == "us-west-2" ] || [ "${region}" == "us-west-1" ] || [ "${region}" == "us-east-1" ] || [ "${region}" == "eu-west-1" ] || [ "${region}" == "eu-central-1" ] ; then
     echo "Valid region selected."
     return 0
   fi
-  echo "Armory Spinnaker can only be installed in us-west-1, us-west-2 or us-east-1."
+  echo "Armory Spinnaker is only available in us-west-1, us-west-2, us-east-1, eu-central-1, or eu-west-1."
+  echo "Please send us an email at hello@armory.io to request your perfered region."
   return 1
 }
 
@@ -201,7 +202,7 @@ function get_var() {
     if [ -z "${value}" ]; then
       echo "This value can not be blank."
       get_var "$1" $2 $3
-    elif [ ! -z "$val_func" ] && ! $val_func ${value}; then 
+    elif [ ! -z "$val_func" ] && ! $val_func ${value}; then
       get_var "$1" $2 $3
     else
       export ${var_name}=${value}
@@ -234,7 +235,7 @@ function prompt_user() {
   fi
   if [[ "${use_env_file}" == 'n' ]]; then
     get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]: " TF_VAR_deploy_configuration validate_mode
-    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile 
+    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile
     get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region validate_region
     get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket list_s3_bucket
     get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
