@@ -181,11 +181,17 @@ function validate_profile() {
 
 function validate_region() {
   local region=${1}
-  if [ "${region}" == "us-west-2" ] || [ "${region}" == "us-west-1" ] || [ "${region}" == "us-east-1" ] || [ "${region}" == "eu-west-1" ] || [ "${region}" == "eu-central-1" ] ; then
-    echo "Valid region selected."
-    return 0
-  fi
-  echo "Armory Spinnaker is only available in us-west-1, us-west-2, us-east-1, eu-central-1, or eu-west-1 at the moment."
+  local regions=("us-west-1" "us-west-2" "us-east-1" "eu-central-1" "eu-west-1")
+  for r in ${regions[@]}; do
+    if [ "${region}" == "${r}" ] ; then
+      echo "Valid region selected."
+      return 0
+    fi
+  done
+  echo "Armory Spinnaker is only available in:"
+  for r in ${regions[@]}; do
+    echo "  - ${r}"
+  done
   echo "Visit http://go.armory.io/chat to let us know where else you'd like Armory Spinnaker."
   return 1
 }
