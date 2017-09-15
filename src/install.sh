@@ -252,8 +252,9 @@ function prompt_user() {
     create_tmp_space
     set_aws_vars
     save_user_responses
-    download_tf_templates
   fi
+
+  download_tf_templates # always download the newest terraform from script
 }
 
 function save_user_responses() {
