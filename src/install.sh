@@ -262,7 +262,7 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name validate_keypair
-    get_var "Should the UI be made available from the external network? [y/n]: " TF_VAR_armoryspinnaker_public_elb validate_public_elb
+    get_var "Should the UI be made available from a public interface? [y/n]: " TF_VAR_armoryspinnaker_public_elb validate_public_elb
 
     create_tmp_space
     set_aws_vars
@@ -310,7 +310,7 @@ function create_spinnaker_stack() {
 
 function wait_for_spinnaker() {
   echo "All your resources have been created."
-  echo "Log into your AWS console and find your external ELB URL"
+  echo "Log into your AWS console and find your UI ELB URL"
   echo "Need help, advice, or just want to say hello during the installation?"
   echo "You can chat with our team at ${BLUE}http://go.armory.io/chat${NC}"
   exit 0
