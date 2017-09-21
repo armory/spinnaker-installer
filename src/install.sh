@@ -157,6 +157,20 @@ function validate_keypair() {
   return $result
 }
 
+function validate_public_elb() {
+  local option=${1}
+  if [ "${option}" == "y" ] || [ "${option}" == "n" ] ; then
+    if [ "${option}" == "y" ] ; then
+      echo "User-facing load balancer will be accessible from the internet."
+    else
+      echo "No load balancers will be directly accessible from the internet."
+    fi
+    return 0
+  fi
+  echo "You must answer 'y' or 'n'."
+  return 1
+}
+
 function validate_mode() {
   local mode=${1}
   if [ "${mode}" == "ha" ] || [ "${mode}" == "stand-alone" ] ; then
@@ -248,6 +262,7 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name validate_keypair
+    get_var "Should the UI be made available from the external network? [y/n]: " TF_VAR_armoryspinnaker_public_elb validate_public_elb
 
     create_tmp_space
     set_aws_vars
