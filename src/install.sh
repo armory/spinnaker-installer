@@ -296,7 +296,7 @@ function clean_terraform() {
   run_terraform "destroy" $1
 }
 
-function create_spinnaker_stack() {
+function apply_configuration() {
   source ${MP_FILE}
   run_terraform "remote config -backend=S3 \
     -backend-config=bucket=${TF_VAR_s3_bucket} \
@@ -327,12 +327,12 @@ function wait_for_spinnaker() {
 
 function main() {
   if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
-    create_spinnaker_stack
+    apply_configuration
   else
     describe_installer
     look_for_docker
     prompt_user
-    create_spinnaker_stack
+    apply_configuration
     wait_for_spinnaker
   fi
 }
