@@ -283,7 +283,12 @@ function save_user_responses() {
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
+  if [[ ${INSTALLER_PACKAGE_URL} == "" ]] ; then
+    curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
+  else
+    echo "Downloading from ${INSTALLER_PACKAGE_URL}..."
+    curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
+  fi
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
 
