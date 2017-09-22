@@ -305,11 +305,15 @@ function create_spinnaker_stack() {
     -pull=true"
 
   run_terraform "get" "./${TF_VAR_deploy_configuration}"
-  run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
-    echo "Terraform error. Cleaning up partial infrastruction."
+  if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
+    echo "Uninstalling..."
     clean_terraform "./${TF_VAR_deploy_configuration}"
-    error "Terraform error."
-  }
+  else
+    run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
+      echo "Terraform error. Cleaning up partial infrastruction."
+      error "Terraform error."
+    }
+  fi
   run_terraform "remote push"
 }
 
@@ -322,9 +326,11 @@ function wait_for_spinnaker() {
 }
 
 function main() {
-  describe_installer
-  look_for_docker
-  prompt_user
+  if [[ ${UNINSTALL_ARMORY_SPINNAKER} != "uninstall" ]] ; then
+    describe_installer
+    look_for_docker
+    prompt_user
+  fi
   create_spinnaker_stack
   wait_for_spinnaker
 }
