@@ -326,13 +326,15 @@ function wait_for_spinnaker() {
 }
 
 function main() {
-  if [[ ${UNINSTALL_ARMORY_SPINNAKER} != "uninstall" ]] ; then
+  if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
+    create_spinnaker_stack
+  else
     describe_installer
     look_for_docker
     prompt_user
+    create_spinnaker_stack
+    wait_for_spinnaker
   fi
-  create_spinnaker_stack
-  wait_for_spinnaker
 }
 
 main
