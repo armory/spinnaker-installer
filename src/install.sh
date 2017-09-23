@@ -18,7 +18,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 SOURCE_URL="http://get.armory.io/install/release"
 INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.8.106.tar.gz
-INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}
+INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 MP_FILE=${TMP_PATH}/armory-env.tmp
@@ -292,7 +292,7 @@ function clean_terraform() {
   run_terraform "destroy" $1
 }
 
-function apply_configuration() {
+function fetch_configuration() {
   source ${MP_FILE}
   run_terraform "remote config -backend=S3 \
     -backend-config=bucket=${TF_VAR_s3_bucket} \
@@ -301,15 +301,22 @@ function apply_configuration() {
     -pull=true"
 
   run_terraform "get" "./${TF_VAR_deploy_configuration}"
-  if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
-    echo "Uninstalling..."
+}
+
+function create_spinnaker_stack() {
+  run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
+    echo "Terraform error. Cleaning up partial infrastruction."
     clean_terraform "./${TF_VAR_deploy_configuration}"
-  else
-    run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
-      echo "Terraform error. Cleaning up partial infrastruction."
-      error "Terraform error."
-    }
-  fi
+    error "Terraform error."
+  }
+}
+
+function delete_spinnaker_stack() {
+  echo "Uninstalling..."
+  clean_terraform "./${TF_VAR_deploy_configuration}"
+}
+
+function save_configuration() {
   run_terraform "remote push"
 }
 
@@ -323,14 +330,17 @@ function wait_for_spinnaker() {
 
 function main() {
   if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
-    apply_configuration
+    fetch_configuration
+    delete_spinnaker_stack
   else
     describe_installer
     look_for_docker
     prompt_user
-    apply_configuration
+    fetch_configuration
+    create_spinnaker_stack
     wait_for_spinnaker
   fi
+  save_configuration
 }
 
 main
