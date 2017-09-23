@@ -18,6 +18,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 SOURCE_URL="http://get.armory.io/install/release"
 INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.8.106.tar.gz
+INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 MP_FILE=${TMP_PATH}/armory-env.tmp
@@ -283,12 +284,7 @@ function save_user_responses() {
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  if [[ ${INSTALLER_PACKAGE_URL} == "" ]] ; then
-    curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
-  else
-    echo "Downloading from ${INSTALLER_PACKAGE_URL}..."
-    curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
-  fi
+  curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
 
