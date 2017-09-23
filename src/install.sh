@@ -18,6 +18,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 SOURCE_URL="http://get.armory.io/install/release"
 INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.8.106.tar.gz
+INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
 TMP_PATH=${HOME}/tmp/armory
 TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
 MP_FILE=${TMP_PATH}/armory-env.tmp
@@ -157,6 +158,20 @@ function validate_keypair() {
   return $result
 }
 
+function validate_public_elb() {
+  local option=${1}
+  if [ "${option}" == "y" ] || [ "${option}" == "n" ] ; then
+    if [ "${option}" == "y" ] ; then
+      echo "User-facing load balancer will be accessible from the internet."
+    else
+      echo "No load balancers will be directly accessible from the internet."
+    fi
+    return 0
+  fi
+  echo "You must answer 'y' or 'n'."
+  return 1
+}
+
 function validate_mode() {
   local mode=${1}
   if [ "${mode}" == "ha" ] || [ "${mode}" == "stand-alone" ] ; then
@@ -248,6 +263,7 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name validate_keypair
+    get_var "Should the UI be Internet Facing? [y/n]: " TF_VAR_armoryspinnaker_public_elb validate_public_elb
 
     create_tmp_space
     set_aws_vars
@@ -268,7 +284,7 @@ function save_user_responses() {
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
+  curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
 
@@ -276,7 +292,7 @@ function clean_terraform() {
   run_terraform "destroy" $1
 }
 
-function create_spinnaker_stack() {
+function fetch_configuration() {
   source ${MP_FILE}
   run_terraform "remote config -backend=S3 \
     -backend-config=bucket=${TF_VAR_s3_bucket} \
@@ -285,28 +301,46 @@ function create_spinnaker_stack() {
     -pull=true"
 
   run_terraform "get" "./${TF_VAR_deploy_configuration}"
+}
+
+function create_spinnaker_stack() {
   run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
     echo "Terraform error. Cleaning up partial infrastruction."
     clean_terraform "./${TF_VAR_deploy_configuration}"
     error "Terraform error."
   }
+}
+
+function delete_spinnaker_stack() {
+  echo "Uninstalling..."
+  clean_terraform "./${TF_VAR_deploy_configuration}"
+}
+
+function save_configuration() {
   run_terraform "remote push"
 }
 
 function wait_for_spinnaker() {
   echo "All your resources have been created."
-  echo "Log into your AWS console and find your external ELB URL"
+  echo "Log into your AWS console and find your UI ELB URL"
   echo "Need help, advice, or just want to say hello during the installation?"
   echo "You can chat with our team at ${BLUE}http://go.armory.io/chat${NC}"
   exit 0
 }
 
 function main() {
-  describe_installer
-  look_for_docker
-  prompt_user
-  create_spinnaker_stack
-  wait_for_spinnaker
+  if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
+    fetch_configuration
+    delete_spinnaker_stack
+  else
+    describe_installer
+    look_for_docker
+    prompt_user
+    fetch_configuration
+    create_spinnaker_stack
+    wait_for_spinnaker
+  fi
+  save_configuration
 }
 
 main
