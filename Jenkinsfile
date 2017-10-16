@@ -1,13 +1,7 @@
 node {
     checkout scm
     stage("Build Artifact") {
-        sh("arm build")
+        sh("export SPINNAKER_TERRAFORM_VERSION=dummy; arm build")
         archiveArtifacts artifacts: 'build/*', fingerprint: true
-    }
-    stage("Publish Artifact") {
-        sh("arm push")
-    }
-    stage("Promote Artifact") {
-        sh("arm release")
     }
 }
