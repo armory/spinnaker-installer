@@ -19,4 +19,4 @@ BUCKET="s3://armory-web"
 S3_DEST="${BUCKET}/${ARTIFACT_NAME}"
 
 echo "Uploading to get.armory.io/"
-echo aws s3 cp ${LOCAL_ARTIFACT_PATH} ${S3_DEST}
+aws s3 cp ${LOCAL_ARTIFACT_PATH} ${S3_DEST}
