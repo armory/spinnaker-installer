@@ -138,7 +138,7 @@ function validate_vpc() {
     return 1
   fi
   if [[ ${vpc_cidr} == 172.18.* ]]; then
-    echo "VPC CIDR block (${vpc_cird}) conflicts with the docker-compose network at 172.18.0.0/16"
+    echo "VPC CIDR block (${vpc_cidr}) conflicts with the docker-compose network at 172.18.0.0/16"
     return 1
   fi
   return $result
