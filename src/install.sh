@@ -126,10 +126,20 @@ function validate_vpc() {
   local vpc=${1}
   aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} &> /dev/null
   local result=$?
-  if [ "$result" == "0" ]; then
-    echo "Valid VPC selected."
-  else
+  if [ "$result" != "0" ]; then
     echo "Could not find '${vpc}' in ${TF_VAR_aws_region} using profile '${AWS_PROFILE}'. Please check that it exists and you have permission."
+    return $result
+  fi
+  local vpc_cidr=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} --query 'Vpcs[0].{cidr:CidrBlock}' --output text)
+  # AWS netmasks have at minimum 16 significant bits, so we can match on the
+  # first two bytes of the cidr to make sure there's no overlap.
+  if [[ ${vpc_cidr} == 172.17.* ]]; then
+    echo "VPC CIDR block (${vpc_cidr}) conflicts with the Docker bridge network at 172.17.0.0/16"
+    return 1
+  fi
+  if [[ ${vpc_cidr} == 172.18.* ]]; then
+    echo "VPC CIDR block (${vpc_cidr}) conflicts with the docker-compose network at 172.18.0.0/16"
+    return 1
   fi
   return $result
 }
