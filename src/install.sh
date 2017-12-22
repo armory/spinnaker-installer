@@ -84,6 +84,13 @@ Ref: https://docs.docker.com/engine/installation/linux/linux-postinstall/"
   fi
 }
 
+function look_for_curl() {
+  type curl >/dev/null 2>&1 || { error "I require curl but it's not installed."; }
+}
+function look_for_tar() {
+  type tar >/dev/null 2>&1 || { error "I require tar but it's not installed."; }
+}
+
 function look_for_docker() {
   type docker >/dev/null 2>&1 || { docker_error "I require docker but it's not installed."; }
   docker ps >/dev/null 2>&1 || { docker_error "Docker daemon is not running."; }
@@ -362,6 +369,8 @@ function main() {
     delete_spinnaker_stack
   else
     describe_installer
+    look_for_curl
+    look_for_tar
     look_for_docker
     look_for_aws
     prompt_user
