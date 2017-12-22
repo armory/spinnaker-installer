@@ -69,11 +69,29 @@ function mac_warning() {
     echo
   fi
 }
+function docker_error() {
+  error_message=$1
+  uname -a|grep Linux
+  if [[ "$?" -eq "0" ]]; then
+    linux_msg="${error_message}
+NOTE: If you've installed Docker as a package, you may need to
+configure permissions to allow you to run Docker as a non-root
+user, or run the installer as root.
+Ref: https://docs.docker.com/engine/installation/linux/linux-postinstall/"
+    error "$linux_msg"
+  else
+    error "$error_message"
+  fi
+}
 
 function look_for_docker() {
-  type docker >/dev/null 2>&1 || { error "I require docker but it's not installed."; }
-  docker ps >/dev/null 2>&1 || { error "Docker deamon is not running."; }
+  type docker >/dev/null 2>&1 || { docker_error "I require docker but it's not installed."; }
+  docker ps >/dev/null 2>&1 || { docker_error "Docker daemon is not running."; }
   mac_warning
+}
+
+function look_for_aws() {
+  type aws >/dev/null 2>&1 || { error "I require aws but it's not installed. Ref: http://docs.aws.amazon.com/cli/latest/userguide/installing.html"; }
 }
 
 function run_terraform() {
@@ -345,6 +363,7 @@ function main() {
   else
     describe_installer
     look_for_docker
+    look_for_aws
     prompt_user
     fetch_configuration
     create_spinnaker_stack
