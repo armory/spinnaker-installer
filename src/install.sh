@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-cat << EOF
+function startup() {
+  cat << EOF
 
     :::     :::::::::  ::::    ::::   ::::::::  :::::::::  :::   :::
   :+: :+:   :+:    :+: +:+:+: :+:+:+ :+:    :+: :+:    :+: :+:   :+:
@@ -13,15 +14,17 @@ cat << EOF
 
 EOF
 
-set -o pipefail
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-SOURCE_URL="http://get.armory.io/install/release"
-INSTALLER_PACKAGE_NAME=spinnaker-terraform-SPINNAKER_TERRAFORM_VERSION.tar.gz
-INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
-TMP_PATH=${HOME}/tmp/armory
-TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
-MP_FILE=${TMP_PATH}/armory-env.tmp
+  set -o pipefail
+  BLUE='\033[0;34m'
+  NC='\033[0m' # No Color
+  SOURCE_URL="http://get.armory.io/install/release"
+  INSTALLER_PACKAGE_NAME=spinnaker-terraform-SPINNAKER_TERRAFORM_VERSION.tar.gz
+  INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
+  TMP_PATH=${HOME}/tmp/armory
+  TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
+  MP_FILE=${TMP_PATH}/armory-env.tmp
+}
+
 function describe_installer() {
   cat <<EOF
   This installer will launch Spinnaker inside your AWS account.
@@ -364,6 +367,7 @@ function wait_for_spinnaker() {
 }
 
 function main() {
+  startup
   if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
     fetch_configuration
     delete_spinnaker_stack
