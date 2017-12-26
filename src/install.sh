@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-cat << EOF
+function startup() {
+  cat <<EOF
 
     :::     :::::::::  ::::    ::::   ::::::::  :::::::::  :::   :::
   :+: :+:   :+:    :+: +:+:+: :+:+:+ :+:    :+: :+:    :+: :+:   :+:
@@ -13,17 +14,21 @@ cat << EOF
 
 EOF
 
-set -o pipefail
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-SOURCE_URL="http://get.armory.io/install/release"
-INSTALLER_PACKAGE_NAME=spinnaker-terraform-SPINNAKER_TERRAFORM_VERSION.tar.gz
-INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
-TMP_PATH=${HOME}/tmp/armory
-TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
-MP_FILE=${TMP_PATH}/armory-env.tmp
+  
+  UNINSTALL_ARMORY_SPINNAKER="false"
+  set -o pipefail
+  BLUE='\033[0;34m'
+  NC='\033[0m' # No Color
+  SOURCE_URL="http://get.armory.io/install/release"
+  INSTALLER_PACKAGE_NAME=spinnaker-terraform-SPINNAKER_TERRAFORM_VERSION.tar.gz
+  INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
+  TMP_PATH="${HOME}/tmp/armory"
+  TMP_PACKAGE_PATH="${TMP_PATH}/${INSTALLER_PACKAGE_NAME}"
+  MP_FILE="${TMP_PATH}/armory-env.tmp"
+}
+
 function describe_installer() {
-  cat <<EOF
+  echo "
   This installer will launch Spinnaker inside your AWS account.
 
   The following AWS resources are required:
@@ -48,8 +53,8 @@ Need help, advice, or just want to say hello during the installation?
 Chat with our eng. team at http://go.Armory.io/chat.
 One customer called us “ridiculously responsive.”  Hopefully we can be the same for you!
 
-Press 'Enter' key to continue. Ctrl+c to quit.
-EOF
+Press 'Enter' key to continue. Ctrl+C to quit.
+"
   read
 }
 
@@ -313,12 +318,14 @@ function save_user_responses() {
   # we have to do this to make sure to not put this bash into
   # environment file
   unset BASH_EXECUTION_STRING
+  unset SUDO_COMMAND
   local_env=$(set -o posix ; set | grep -E "TF_VAR|AWS")
   echo "$local_env" >> $MP_FILE
 }
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
+  echo "curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL}"
   curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
@@ -364,6 +371,7 @@ function wait_for_spinnaker() {
 }
 
 function main() {
+  startup
   if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
     fetch_configuration
     delete_spinnaker_stack
