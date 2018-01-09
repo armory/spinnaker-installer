@@ -129,10 +129,10 @@ function validate_s3_bucket() {
     return $result
   fi
 
-  local resp=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3api get-bucket-location --bucket ${bucket})
+    local resp=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3api get-bucket-location --bucket ${bucket})
   # This is a special case for us-east-1. The AWS API returns null for legacy reasons.
   if [ "${TF_VAR_aws_region}" == "us-east-1" ]; then
-    echo $resp | grep None &> /dev/null || {
+    echo $resp | grep 'null\|None' &> /dev/null || {
       echo "Bucket ${bucket} is not in ${TF_VAR_aws_region}"
       return 1
     }
