@@ -14,7 +14,7 @@ function startup() {
 
 EOF
 
-  UNINSTALL_ARMORY_SPINNAKER="false"
+  UNINSTALL_ARMORY_SPINNAKER="${UNINSTALL_ARMORY_SPINNAKER:-false}"
   set -o pipefail
   BLUE='\033[0;34m'
   NC='\033[0m' # No Color
