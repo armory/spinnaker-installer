@@ -52,7 +52,33 @@ EOF
   read
 }
 
+function debug_success() {
+  curl -s -X POST https://debug.armory.io/ -H "Authorization: Armory ${ARMORY_ID}" -d"{
+    \"content\": {
+      \"status\": \"success\",
+      \"environment\": \"aws\"
+    },
+    \"details\": {
+      \"source\": \"installer\",
+      \"type\": \"installation:success\",
+      \"armoryId\": \"${ARMORY_ID}\"
+    }
+  }" 1&2 2>>/dev/null || true
+}
+
 function error() {
+  curl -s -X POST https://debug.armory.io/ -H "Authorization: Armory ${ARMORY_ID}" -d"{
+    \"content\": {
+      \"status\": \"failure\",
+      \"error\": \"$1\",
+      \"environment\": \"aws\"
+    },
+    \"details\": {
+      \"source\": \"installer\",
+      \"type\": \"installation:failure\",
+      \"armoryId\": \"${ARMORY_ID}\"
+    }
+  }" 1&2 2>>/dev/null || true
   echo >&2 "Oops that didn't work.  Visit http://go.armory.io/chat to chat with us and we can help"
   echo >&2 "ERROR: $1"
   echo >&2 "Aborting."
@@ -201,7 +227,7 @@ function get_var() {
     if [ -z "${value}" ]; then
       echo "This value can not be blank."
       get_var "$1" $2 $3
-    elif [ ! -z "$val_func" ] && ! $val_func ${value}; then 
+    elif [ ! -z "$val_func" ] && ! $val_func ${value}; then
       get_var "$1" $2 $3
     else
       export ${var_name}=${value}
@@ -234,7 +260,7 @@ function prompt_user() {
   fi
   if [[ "${use_env_file}" == 'n' ]]; then
     get_var "Would you like to install Armory Spinnaker in a high availablity('ha') or development('stand-alone') configuration? [stand-alone|ha]: " TF_VAR_deploy_configuration validate_mode
-    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile 
+    get_var "Enter your AWS Profile [e.g. devprofile]: " AWS_PROFILE validate_profile
     get_var "Enter an AWS Region. Spinnaker will be installed inside this region. [e.g. us-west-2]: " TF_VAR_aws_region validate_region
     get_var "Enter an already created S3 bucket to use for persisting Spinnaker's data, this bucket must be in the specified region [e.g. examplebucket]: " TF_VAR_s3_bucket validate_s3_bucket list_s3_bucket
     get_var "Enter S3 path prefix to use within the bucket [e.g. armory/config]: " TF_VAR_s3_prefix
@@ -294,11 +320,14 @@ function wait_for_spinnaker() {
 }
 
 function main() {
+  export ARMORY_ID=$(uuidgen 2>>/dev/null || date +%s 2>>/dev/null || echo $(( RANDOM % 1000000 )))
+  echo "TF_VAR_armory_id=$ARMORY_ID" >> $MP_FILE
   describe_installer
   look_for_docker
   prompt_user
   create_spinnaker_stack
   wait_for_spinnaker
+  debug_success
 }
 
 main
