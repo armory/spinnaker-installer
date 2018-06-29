@@ -57,7 +57,33 @@ Press 'Enter' key to continue. Ctrl+C to quit.
   read
 }
 
+function debug_success() {
+  curl -s -X POST https://debug.armory.io/ -H "Authorization: Armory ${ARMORY_ID}" -d"{
+    \"content\": {
+      \"status\": \"success\",
+      \"environment\": \"aws\"
+    },
+    \"details\": {
+      \"source\": \"installer\",
+      \"type\": \"installation:success\",
+      \"armoryId\": \"${ARMORY_ID}\"
+    }
+  }" 1&2 2>>/dev/null || true
+}
+
 function error() {
+  curl -s -X POST https://debug.armory.io/ -H "Authorization: Armory ${ARMORY_ID}" -d"{
+    \"content\": {
+      \"status\": \"failure\",
+      \"error\": \"$1\",
+      \"environment\": \"aws\"
+    },
+    \"details\": {
+      \"source\": \"installer\",
+      \"type\": \"installation:failure\",
+      \"armoryId\": \"${ARMORY_ID}\"
+    }
+  }" 1&2 2>>/dev/null || true
   echo >&2 "Oops that didn't work.  Visit http://go.armory.io/chat to chat with us and we can help"
   echo >&2 "ERROR: $1"
   echo >&2 "Aborting."
@@ -369,8 +395,14 @@ function wait_for_spinnaker() {
   exit 0
 }
 
+function armory_id() {
+  export ARMORY_ID=$(uuidgen 2>>/dev/null || date +%s 2>>/dev/null || echo $(( RANDOM % 1000000 )))
+  echo "TF_VAR_armory_id=$ARMORY_ID" >> $MP_FILE
+}
+
 function main() {
   startup
+  armory_id
   if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
     fetch_configuration
     delete_spinnaker_stack
