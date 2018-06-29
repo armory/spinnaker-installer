@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-cat << EOF
+function startup() {
+  cat <<EOF
 
     :::     :::::::::  ::::    ::::   ::::::::  :::::::::  :::   :::
   :+: :+:   :+:    :+: +:+:+: :+:+:+ :+:    :+: :+:    :+: :+:   :+:
@@ -13,16 +14,20 @@ cat << EOF
 
 EOF
 
-set -o pipefail
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-SOURCE_URL="http://get.armory.io/install/release"
-INSTALLER_PACKAGE_NAME=spinnaker-terraform-1.8.82.tar.gz
-TMP_PATH=${HOME}/tmp/armory
-TMP_PACKAGE_PATH=${TMP_PATH}/${INSTALLER_PACKAGE_NAME}
-MP_FILE=${TMP_PATH}/armory-env.tmp
+  UNINSTALL_ARMORY_SPINNAKER="${UNINSTALL_ARMORY_SPINNAKER:-false}"
+  set -o pipefail
+  BLUE='\033[0;34m'
+  NC='\033[0m' # No Color
+  SOURCE_URL="https://get.armory.io/install/release"
+  INSTALLER_PACKAGE_NAME=spinnaker-terraform-SPINNAKER_TERRAFORM_VERSION.tar.gz
+  INSTALLER_PACKAGE_URL=${INSTALLER_PACKAGE_URL:-${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}}
+  TMP_PATH="${HOME}/tmp/armory"
+  TMP_PACKAGE_PATH="${TMP_PATH}/${INSTALLER_PACKAGE_NAME}"
+  MP_FILE="${TMP_PATH}/armory-env.tmp"
+}
+
 function describe_installer() {
-  cat <<EOF
+  echo "
   This installer will launch Spinnaker inside your AWS account.
 
   The following AWS resources are required:
@@ -47,8 +52,8 @@ Need help, advice, or just want to say hello during the installation?
 Chat with our eng. team at http://go.Armory.io/chat.
 One customer called us “ridiculously responsive.”  Hopefully we can be the same for you!
 
-Press 'Enter' key to continue. Ctrl+c to quit.
-EOF
+Press 'Enter' key to continue. Ctrl+C to quit.
+"
   read
 }
 
@@ -94,11 +99,36 @@ function mac_warning() {
     echo
   fi
 }
+function docker_error() {
+  error_message=$1
+  uname -a|grep Linux
+  if [[ "$?" -eq "0" ]]; then
+    linux_msg="${error_message}
+NOTE: If you've installed Docker as a package, you may need to
+configure permissions to allow you to run Docker as a non-root
+user, or run the installer as root.
+Ref: https://docs.docker.com/engine/installation/linux/linux-postinstall/"
+    error "$linux_msg"
+  else
+    error "$error_message"
+  fi
+}
+
+function look_for_curl() {
+  type curl >/dev/null 2>&1 || { error "I require curl but it's not installed."; }
+}
+function look_for_tar() {
+  type tar >/dev/null 2>&1 || { error "I require tar but it's not installed."; }
+}
 
 function look_for_docker() {
-  type docker >/dev/null 2>&1 || { error "I require docker but it's not installed."; }
-  docker ps >/dev/null 2>&1 || { error "Docker deamon is not running."; }
+  type docker >/dev/null 2>&1 || { docker_error "I require docker but it's not installed."; }
+  docker ps >/dev/null 2>&1 || { docker_error "Docker daemon is not running."; }
   mac_warning
+}
+
+function look_for_aws() {
+  type aws >/dev/null 2>&1 || { error "I require aws but it's not installed. Ref: http://docs.aws.amazon.com/cli/latest/userguide/installing.html"; }
 }
 
 function run_terraform() {
@@ -127,7 +157,7 @@ function validate_s3_bucket() {
   local resp=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} s3api get-bucket-location --bucket ${bucket})
   # This is a special case for us-east-1. The AWS API returns null for legacy reasons.
   if [ "${TF_VAR_aws_region}" == "us-east-1" ]; then
-    echo $resp | grep null &> /dev/null || {
+    echo $resp | grep 'null\|None' &> /dev/null || {
       echo "Bucket ${bucket} is not in ${TF_VAR_aws_region}"
       return 1
     }
@@ -151,10 +181,20 @@ function validate_vpc() {
   local vpc=${1}
   aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} &> /dev/null
   local result=$?
-  if [ "$result" == "0" ]; then
-    echo "Valid VPC selected."
-  else
+  if [ "$result" != "0" ]; then
     echo "Could not find '${vpc}' in ${TF_VAR_aws_region} using profile '${AWS_PROFILE}'. Please check that it exists and you have permission."
+    return $result
+  fi
+  local vpc_cidr=$(aws --profile ${AWS_PROFILE} --region ${TF_VAR_aws_region} ec2 describe-vpcs --vpc-ids ${vpc} --query 'Vpcs[0].{cidr:CidrBlock}' --output text)
+  # AWS netmasks have at minimum 16 significant bits, so we can match on the
+  # first two bytes of the cidr to make sure there's no overlap.
+  if [[ ${vpc_cidr} == 172.17.* ]]; then
+    echo "VPC CIDR block (${vpc_cidr}) conflicts with the Docker bridge network at 172.17.0.0/16"
+    return 1
+  fi
+  if [[ ${vpc_cidr} == 172.18.* ]]; then
+    echo "VPC CIDR block (${vpc_cidr}) conflicts with the docker-compose network at 172.18.0.0/16"
+    return 1
   fi
   return $result
 }
@@ -183,6 +223,20 @@ function validate_keypair() {
   return $result
 }
 
+function validate_public_elb() {
+  local option=${1}
+  if [ "${option}" == "y" ] || [ "${option}" == "n" ] ; then
+    if [ "${option}" == "y" ] ; then
+      echo "User-facing load balancer will be accessible from the internet."
+    else
+      echo "No load balancers will be directly accessible from the internet."
+    fi
+    return 0
+  fi
+  echo "You must answer 'y' or 'n'."
+  return 1
+}
+
 function validate_mode() {
   local mode=${1}
   if [ "${mode}" == "ha" ] || [ "${mode}" == "stand-alone" ] ; then
@@ -207,11 +261,18 @@ function validate_profile() {
 
 function validate_region() {
   local region=${1}
-  if [ "${region}" == "us-west-2" ] || [ "${region}" == "us-west-1" ] || [ "${region}" == "us-east-1" ] ; then
-    echo "Valid region selected."
-    return 0
-  fi
-  echo "Armory Spinnaker can only be installed in us-west-1, us-west-2 or us-east-1."
+  local regions=("us-west-1" "us-west-2" "us-east-1" "eu-central-1" "eu-west-1")
+  for r in ${regions[@]}; do
+    if [ "${region}" == "${r}" ] ; then
+      echo "Valid region selected."
+      return 0
+    fi
+  done
+  echo "Armory Spinnaker is only available in:"
+  for r in ${regions[@]}; do
+    echo "  - ${r}"
+  done
+  echo "Visit http://go.armory.io/chat to let us know where else you'd like Armory Spinnaker."
   return 1
 }
 
@@ -267,12 +328,14 @@ function prompt_user() {
     get_var "Enter a VPC ID. Spinnaker will be installed inside this VPC. [e.g. vpc-7762cd13]: " TF_VAR_vpc_id validate_vpc
     get_var "Enter Subnet ID(s). Spinnaker will be installed inside this Subnet. Subnets cannot be in the same AZ [e.g. subnet-8f5d43d6,subnet-1234abcd]: " TF_VAR_armoryspinnaker_subnet_ids validate_subnet
     get_var "Enter a Key Pair name already set up with AWS/EC2. Spinnaker will be created using this key. [e.g. default-keypair]: " TF_VAR_key_name validate_keypair
+    get_var "Should the UI be Internet Facing? [y/n]: " TF_VAR_armoryspinnaker_public_elb validate_public_elb
 
     create_tmp_space
     set_aws_vars
     save_user_responses
-    download_tf_templates
   fi
+
+  download_tf_templates # always download the newest terraform from script
 }
 
 function save_user_responses() {
@@ -280,13 +343,15 @@ function save_user_responses() {
   # we have to do this to make sure to not put this bash into
   # environment file
   unset BASH_EXECUTION_STRING
+  unset SUDO_COMMAND
   local_env=$(set -o posix ; set | grep -E "TF_VAR|AWS")
   echo "$local_env" >> $MP_FILE
 }
 
 function download_tf_templates() {
   echo "Downloading terraform template files..."
-  curl --output ${TMP_PACKAGE_PATH} "${SOURCE_URL}/${INSTALLER_PACKAGE_NAME}" 2>>/dev/null || { error "Could not download."; }
+  echo "curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL}"
+  curl --output ${TMP_PACKAGE_PATH} ${INSTALLER_PACKAGE_URL} 2>>/dev/null || { error "Could not download."; }
   tar xvfz ${TMP_PACKAGE_PATH} -C ${TMP_PATH} || { error "Could not untar package."; }
 }
 
@@ -294,7 +359,7 @@ function clean_terraform() {
   run_terraform "destroy" $1
 }
 
-function create_spinnaker_stack() {
+function fetch_configuration() {
   source ${MP_FILE}
   run_terraform "remote config -backend=S3 \
     -backend-config=bucket=${TF_VAR_s3_bucket} \
@@ -303,31 +368,56 @@ function create_spinnaker_stack() {
     -pull=true"
 
   run_terraform "get" "./${TF_VAR_deploy_configuration}"
+}
+
+function create_spinnaker_stack() {
   run_terraform "apply" "./${TF_VAR_deploy_configuration}" || {
     echo "Terraform error. Cleaning up partial infrastruction."
     clean_terraform "./${TF_VAR_deploy_configuration}"
     error "Terraform error."
   }
+}
+
+function delete_spinnaker_stack() {
+  echo "Uninstalling..."
+  clean_terraform "./${TF_VAR_deploy_configuration}"
+}
+
+function save_configuration() {
   run_terraform "remote push"
 }
 
 function wait_for_spinnaker() {
   echo "All your resources have been created."
-  echo "Log into your AWS console and find your external ELB URL"
+  echo "Log into your AWS console and find your UI ELB URL"
   echo "Need help, advice, or just want to say hello during the installation?"
   echo "You can chat with our team at ${BLUE}http://go.armory.io/chat${NC}"
   exit 0
 }
 
-function main() {
+function armory_id() {
   export ARMORY_ID=$(uuidgen 2>>/dev/null || date +%s 2>>/dev/null || echo $(( RANDOM % 1000000 )))
   echo "TF_VAR_armory_id=$ARMORY_ID" >> $MP_FILE
-  describe_installer
-  look_for_docker
-  prompt_user
-  create_spinnaker_stack
-  wait_for_spinnaker
-  debug_success
+}
+
+function main() {
+  startup
+  armory_id
+  if [[ ${UNINSTALL_ARMORY_SPINNAKER} == "uninstall" ]] ; then
+    fetch_configuration
+    delete_spinnaker_stack
+  else
+    describe_installer
+    look_for_curl
+    look_for_tar
+    look_for_docker
+    look_for_aws
+    prompt_user
+    fetch_configuration
+    create_spinnaker_stack
+    wait_for_spinnaker
+  fi
+  save_configuration
 }
 
 main

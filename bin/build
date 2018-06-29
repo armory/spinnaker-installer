@@ -7,11 +7,16 @@ set -e
 cd "$(dirname "$0")"/..
 
 BUILD_DIR="$(pwd)"/build
-ARTIFACT_NAME="install-${GIT_HASH}.sh"
+ARTIFACT_NAME="install.sh"
 
 rm -dfr ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}
 
+if [[ -z "$SPINNAKER_TERRAFORM_VERSION" ]]; then
+    echo "Missing spinnaker terraform version"
+    exit 1
+fi
+
 # For now all we are doing is copying, but this will get more complicated soon.
-cp `pwd`/src/install.sh ${BUILD_DIR}/${ARTIFACT_NAME}
+sed -e "s/SPINNAKER_TERRAFORM_VERSION/${SPINNAKER_TERRAFORM_VERSION}/" src/install.sh > ${BUILD_DIR}/${ARTIFACT_NAME}
 echo "Created artifact: ${BUILD_DIR}/${ARTIFACT_NAME}"
